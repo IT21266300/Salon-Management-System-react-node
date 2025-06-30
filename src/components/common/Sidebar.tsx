@@ -13,7 +13,6 @@ import {
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
-  People as PeopleIcon,
   Event as EventIcon,
   Person as PersonIcon,
   LocalShipping as SupplierIcon,
@@ -22,6 +21,7 @@ import {
   Assessment as ReportsIcon,
   AdminPanelSettings as AdminIcon,
   Spa as SpaIcon,
+  WorkspacePremium as WorkstationsIcon,
 } from '@mui/icons-material';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
@@ -30,6 +30,7 @@ const menuItems = [
   { path: '/dashboard', label: 'Dashboard', icon: <DashboardIcon /> },
   { path: '/appointments', label: 'Appointments', icon: <EventIcon /> },
   { path: '/customers', label: 'Customers', icon: <PersonIcon /> },
+  { path: '/workstations', label: 'Workstations', icon: <WorkstationsIcon /> },
   { path: '/suppliers', label: 'Suppliers', icon: <SupplierIcon /> },
   { path: '/inventory', label: 'Inventory', icon: <InventoryIcon /> },
   { path: '/sales', label: 'Sales', icon: <SalesIcon /> },

@@ -8,7 +8,8 @@ const router = express.Router();
 router.get('/', (req, res) => {
   try {
     const db = req.app.locals.db;
-    const result = db.prepare(`
+    
+    let query = `
       SELECT a.*, 
              c.first_name || ' ' || c.last_name as customer_name,
              s.name as service_name,
@@ -19,8 +20,11 @@ router.get('/', (req, res) => {
       LEFT JOIN services s ON a.service_id = s.id
       LEFT JOIN workstations w ON a.workstation_id = w.id
       LEFT JOIN users u ON a.staff_id = u.id
-      ORDER BY a.date DESC, a.time DESC
-    `).all();
+    `;
+    
+    query += ' ORDER BY a.date DESC, a.time DESC';
+    
+    const result = db.prepare(query).all();
 
     res.json({ success: true, appointments: result });
   } catch (error) {
@@ -35,14 +39,12 @@ router.post('/', (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
-    }
-
-    const { customerId, serviceId, workstationId, staffId, date, time, duration, totalAmount, notes } = req.body;
+    }    const { customerId, serviceId, workstationId, staffId, date, time, duration, totalAmount, notes } = req.body;
     const db = req.app.locals.db;
 
     const appointmentId = uuidv4();
     db.prepare(`INSERT INTO appointments (id, customer_id, service_id, workstation_id, staff_id, date, time, duration, total_amount, notes)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
       .run(appointmentId, customerId, serviceId, workstationId, staffId, date, time, duration, totalAmount, notes);
 
     res.status(201).json({
@@ -60,12 +62,27 @@ router.post('/', (req, res) => {
 router.put('/:id', (req, res) => {
   try {
     const { id } = req.params;
-    const { status, notes } = req.body;
+    const { status, notes, staffId, workstationId, date, time, duration, totalAmount } = req.body;
     const db = req.app.locals.db;
 
-    // Update appointment status
-    db.prepare('UPDATE appointments SET status = ?, notes = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
-      .run(status, notes, id);
+    // Build dynamic update query based on provided fields
+    const fields = [];
+    const values = [];
+    
+    if (status !== undefined) { fields.push('status = ?'); values.push(status); }
+    if (notes !== undefined) { fields.push('notes = ?'); values.push(notes); }
+    if (staffId !== undefined) { fields.push('staff_id = ?'); values.push(staffId); }
+    if (workstationId !== undefined) { fields.push('workstation_id = ?'); values.push(workstationId); }
+    if (date !== undefined) { fields.push('date = ?'); values.push(date); }
+    if (time !== undefined) { fields.push('time = ?'); values.push(time); }
+    if (duration !== undefined) { fields.push('duration = ?'); values.push(duration); }
+    if (totalAmount !== undefined) { fields.push('total_amount = ?'); values.push(totalAmount); }
+    
+    fields.push('updated_at = CURRENT_TIMESTAMP');
+    values.push(id);
+
+    const query = `UPDATE appointments SET ${fields.join(', ')} WHERE id = ?`;
+    db.prepare(query).run(...values);
 
     res.json({ success: true, message: 'Appointment updated successfully' });
   } catch (error) {
