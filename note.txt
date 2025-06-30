@@ -1,0 +1,210 @@
+Brilliance Salon Management System - Complete Technical Documentation
+📋 Project Overview
+The Brilliance Salon Management System is a comprehensive web-based application designed to streamline salon operations, from appointment booking to inventory management and sales tracking. Built with modern web technologies, it provides a complete solution for beauty salon businesses.
+
+🛠️ Technology Stack
+Frontend Technologies
+React 18+ - Modern JavaScript library for building user interfaces
+TypeScript - Type-safe JavaScript for better development experience
+Material-UI (MUI) v5 - Professional React component library for consistent UI design
+Redux Toolkit - State management for complex application data
+React Router - Client-side routing for single-page application navigation
+Chart.js with React-ChartJS-2 - Data visualization for reports and analytics
+Day.js - Lightweight date manipulation library
+Vite - Fast build tool and development server
+Backend Technologies
+Node.js - JavaScript runtime for server-side development
+Express.js - Web framework for building REST APIs
+SQLite with libsql - Lightweight, file-based database
+JWT (JSON Web Tokens) - Secure authentication and authorization
+bcryptjs - Password hashing for security
+Winston - Logging library for application monitoring
+Express Validator - Input validation and sanitization
+CORS - Cross-origin resource sharing configuration
+Helmet - Security middleware for Express
+Development Tools
+ESLint - Code linting for consistent code quality
+TypeScript ESLint - TypeScript-specific linting rules
+Concurrently - Run multiple npm scripts simultaneously
+Autoprefixer - CSS vendor prefixing
+PostCSS - CSS processing tool
+🏗️ Application Architecture
+Frontend Architecture
+
+src/
+├── components/          # Reusable UI components
+│   ├── common/         # Layout, Header, Sidebar
+│   ├── auth/           # Authentication components
+│   └── administration/ # Admin-specific components
+├── pages/              # Main application pages
+├── store/              # Redux store and slices
+├── theme/              # Material-UI theme configuration
+└── types/              # TypeScript type definitions
+Backend Architecture
+
+backend/
+├── src/
+│   ├── routes/         # API endpoint handlers
+│   ├── middleware/     # Express middleware functions
+│   └── utils/          # Utility functions and helpers
+├── database/           # SQLite database file
+└── logs/               # Application logs
+🔧 Core Functionalities
+1. Authentication & Authorization
+JWT-based Authentication: Secure token-based login system
+Role-based Access Control: Four user roles (Admin, Manager, Staff, Cashier)
+Password Security: bcrypt hashing for password protection
+Session Management: Persistent login with localStorage
+2. Dashboard & Analytics
+Real-time Statistics: Daily/monthly sales, customer count, appointments
+Visual Charts: Sales trends, payment method distribution, top products
+Quick Overview: Today's appointments and low stock alerts
+Performance Metrics: Key business indicators at a glance
+3. Appointment Management
+Calendar Integration: Date and time picker for scheduling
+Service Selection: Choose from available salon services
+Staff Assignment: Assign specific staff members to appointments
+Workstation Management: Allocate workstations for services
+Status Tracking: Pending, confirmed, in-progress, completed, cancelled
+Customer Notifications: Track appointment history
+4. Customer Management
+Customer Profiles: Complete contact information and preferences
+Visit History: Track total visits and spending
+Customer Analytics: Insights into customer behavior
+Search & Filter: Easy customer lookup
+Data Export: Customer information management
+5. Inventory Management
+Product Catalog: Comprehensive product database
+Stock Tracking: Real-time inventory levels
+Low Stock Alerts: Automatic reorder notifications
+Supplier Integration: Link products to suppliers
+Category Management: Organize products by categories
+Price Management: Purchase and selling price tracking
+6. Sales & Point of Sale
+Transaction Processing: Complete sales workflow
+Product Selection: Add multiple items to sales
+Payment Methods: Cash, card, and transfer options
+Receipt Generation: Digital sales receipts
+Discount Management: Apply discounts to sales
+Tax Calculation: Automatic tax computation
+Stock Updates: Automatic inventory deduction
+7. Supplier Management
+Supplier Database: Contact information and details
+Purchase History: Track orders and deliveries
+Performance Tracking: Supplier reliability metrics
+Contact Management: Email and phone integration
+8. Reports & Analytics
+Sales Reports: Daily, weekly, monthly revenue analysis
+Customer Analytics: Customer behavior and preferences
+Inventory Reports: Stock levels and movement
+Staff Performance: Service and sales metrics
+Financial Summaries: Profit and loss tracking
+Export Capabilities: Data export for external analysis
+9. Administration
+User Management: Create and manage staff accounts
+Role Assignment: Set permissions based on roles
+Activity Logging: Track all system activities
+System Configuration: Application settings management
+Security Monitoring: Login attempts and access logs
+🗄️ Database Schema
+Core Tables
+users: Staff accounts with roles and permissions
+customers: Customer profiles and contact information
+appointments: Booking details with service and staff assignments
+services: Available salon services with pricing
+workstations: Physical workstation management
+suppliers: Vendor information and contacts
+products: Inventory items with stock levels
+sales: Transaction records with payment details
+sale_items: Individual items within each sale
+Key Relationships
+Appointments link customers, services, staff, and workstations
+Sales connect customers, staff, and multiple products
+Products are associated with suppliers
+Users have role-based permissions
+🔐 Security Features
+Authentication Security
+Password hashing with bcrypt (10 salt rounds)
+JWT tokens with expiration (24 hours)
+Secure token storage in localStorage
+Protected routes based on authentication status
+Authorization Security
+Role-based access control (RBAC)
+Route protection based on user roles
+API endpoint security with middleware
+Input validation and sanitization
+Application Security
+CORS configuration for cross-origin requests
+Helmet middleware for security headers
+Rate limiting to prevent abuse
+SQL injection prevention with parameterized queries
+XSS protection through input validation
+🎨 User Interface Design
+Design Principles
+Material Design: Following Google's Material Design guidelines
+Responsive Layout: Mobile-first design approach
+Accessibility: WCAG compliance for inclusive design
+Consistent Theming: Unified color scheme and typography
+Intuitive Navigation: Clear menu structure and breadcrumbs
+Key UI Components
+Dashboard Cards: Statistical overview with icons
+Data Tables: Sortable and filterable data display
+Forms: Comprehensive input validation and error handling
+Charts: Interactive data visualization
+Modals: Overlay dialogs for data entry
+Navigation: Sidebar with role-based menu items
+📊 Performance Optimizations
+Frontend Optimizations
+Code Splitting: Lazy loading of components
+State Management: Efficient Redux store structure
+Memoization: React.memo for component optimization
+Bundle Optimization: Vite's efficient bundling
+Backend Optimizations
+Database Indexing: Optimized query performance
+Connection Pooling: Efficient database connections
+Caching: Strategic data caching
+Compression: Response compression for faster loading
+🚀 Deployment & Setup
+Development Setup
+Clone Repository: Download project files
+Install Dependencies: npm install for both frontend and backend
+Environment Configuration: Set up environment variables
+Database Initialization: Automatic table creation and sample data
+Start Development: npm run dev to run both servers
+Production Deployment
+Build Process: npm run build for production optimization
+Environment Variables: Configure production settings
+Database Migration: Set up production database
+Server Configuration: Deploy to hosting platform
+SSL Certificate: Secure HTTPS configuration
+📈 Business Benefits
+Operational Efficiency
+Automated Scheduling: Reduce booking conflicts
+Inventory Automation: Prevent stockouts
+Sales Tracking: Real-time revenue monitoring
+Staff Management: Optimize resource allocation
+Customer Experience
+Professional Booking: Streamlined appointment process
+Service History: Track customer preferences
+Personalized Service: Customer profile insights
+Efficient Checkout: Quick payment processing
+Business Intelligence
+Sales Analytics: Identify trends and opportunities
+Customer Insights: Understand client behavior
+Inventory Optimization: Reduce waste and costs
+Performance Metrics: Data-driven decision making
+🔮 Future Enhancements
+Planned Features
+Mobile App: Native iOS and Android applications
+Online Booking: Customer self-service portal
+SMS Notifications: Automated appointment reminders
+Payment Integration: Stripe/PayPal integration
+Advanced Analytics: Machine learning insights
+Multi-location: Support for salon chains
+Technical Improvements
+Microservices: Service-oriented architecture
+Real-time Updates: WebSocket integration
+Cloud Storage: File and image management
+API Documentation: Swagger/OpenAPI integration
+Testing Suite: Comprehensive test coverage
+This comprehensive salon management system represents a modern, scalable solution for beauty salon businesses, combining robust functionality with an intuitive user experience and strong technical foundation.
