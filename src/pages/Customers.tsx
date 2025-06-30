@@ -167,9 +167,14 @@ const Customers: React.FC = () => {
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 500 }}>
-          Customer Management
-        </Typography>
+        <Box>
+          <Typography variant="h4" sx={{ fontWeight: 500 }}>
+            Customer Management
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            Visit counts and spending are automatically updated when appointments are completed via check-out
+          </Typography>
+        </Box>
         <Button
           variant="contained"
           startIcon={<AddIcon />}

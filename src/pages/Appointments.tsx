@@ -30,6 +30,8 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Event as EventIcon,
+  Login as CheckInIcon,
+  Logout as CheckOutIcon,
 } from '@mui/icons-material';
 import { DatePicker, TimePicker } from '@mui/x-date-pickers';
 import dayjs from 'dayjs';
@@ -70,6 +72,7 @@ const Appointments: React.FC = () => {
     date: dayjs(),
     time: dayjs(),
     duration: 60,
+    status: 'pending' as 'pending' | 'confirmed' | 'in-progress' | 'completed' | 'cancelled',
     totalAmount: 0,
     notes: '',
   });
@@ -167,6 +170,7 @@ const Appointments: React.FC = () => {
         date: dayjs(appointment.date),
         time: dayjs(`2000-01-01 ${appointment.time}`),
         duration: appointment.duration,
+        status: appointment.status,
         totalAmount: appointment.total_amount,
         notes: appointment.notes || '',
       });
@@ -180,6 +184,7 @@ const Appointments: React.FC = () => {
         date: dayjs(),
         time: dayjs(),
         duration: 60,
+        status: 'pending' as 'pending' | 'confirmed' | 'in-progress' | 'completed' | 'cancelled',
         totalAmount: 0,
         notes: '',
       });
@@ -226,6 +231,44 @@ const Appointments: React.FC = () => {
       }
     } catch (error) {
       console.error('Error saving appointment:', error);
+    }
+  };
+
+  const handleCheckIn = async (appointmentId: string) => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/appointments/${appointmentId}/checkin`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        fetchAppointments();
+      } else {
+        console.error('Error checking in appointment');
+      }
+    } catch (error) {
+      console.error('Error checking in appointment:', error);
+    }
+  };
+
+  const handleCheckOut = async (appointmentId: string) => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/appointments/${appointmentId}/checkout`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        fetchAppointments();
+      } else {
+        console.error('Error checking out appointment');
+      }
+    } catch (error) {
+      console.error('Error checking out appointment:', error);
     }
   };
 
@@ -364,6 +407,26 @@ const Appointments: React.FC = () => {
                   <IconButton onClick={() => handleOpenDialog(appointment)} size="small">
                     <EditIcon />
                   </IconButton>
+                  {appointment.status === 'confirmed' && (
+                    <IconButton 
+                      onClick={() => handleCheckIn(appointment.id)} 
+                      size="small" 
+                      color="primary"
+                      title="Check In Customer"
+                    >
+                      <CheckInIcon />
+                    </IconButton>
+                  )}
+                  {appointment.status === 'in-progress' && (
+                    <IconButton 
+                      onClick={() => handleCheckOut(appointment.id)} 
+                      size="small" 
+                      color="success"
+                      title="Check Out Customer"
+                    >
+                      <CheckOutIcon />
+                    </IconButton>
+                  )}
                 </TableCell>
               </TableRow>
             ))}

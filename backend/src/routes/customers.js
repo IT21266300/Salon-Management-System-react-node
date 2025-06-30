@@ -8,9 +8,26 @@ const router = express.Router();
 router.get('/', (req, res) => {
   try {
     const db = req.app.locals.db;
+    
+    // Get customers with calculated visit statistics
     const customers = db.prepare(`
-      SELECT * FROM customers
-      ORDER BY created_at DESC
+      SELECT 
+        c.*,
+        COALESCE(visit_stats.total_visits, 0) as total_visits,
+        COALESCE(visit_stats.total_spent, 0) as total_spent,
+        visit_stats.last_visit
+      FROM customers c
+      LEFT JOIN (
+        SELECT 
+          customer_id,
+          COUNT(*) as total_visits,
+          SUM(total_amount) as total_spent,
+          MAX(date) as last_visit
+        FROM appointments 
+        WHERE status = 'completed'
+        GROUP BY customer_id
+      ) visit_stats ON c.id = visit_stats.customer_id
+      ORDER BY c.created_at DESC
     `).all();
 
     res.json({ success: true, customers });

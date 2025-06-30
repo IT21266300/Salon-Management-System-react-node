@@ -63,12 +63,47 @@ router.put('/:id', (req, res) => {
     const { status, notes } = req.body;
     const db = req.app.locals.db;
 
+    // Update appointment status
     db.prepare('UPDATE appointments SET status = ?, notes = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
       .run(status, notes, id);
 
     res.json({ success: true, message: 'Appointment updated successfully' });
   } catch (error) {
     console.error('Update appointment error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Check-in appointment
+router.patch('/:id/checkin', (req, res) => {
+  try {
+    const { id } = req.params;
+    const db = req.app.locals.db;
+
+    // Update appointment status to in-progress
+    db.prepare('UPDATE appointments SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+      .run('in-progress', id);
+
+    res.json({ success: true, message: 'Customer checked in successfully' });
+  } catch (error) {
+    console.error('Check-in error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Check-out appointment (complete)
+router.patch('/:id/checkout', (req, res) => {
+  try {
+    const { id } = req.params;
+    const db = req.app.locals.db;
+
+    // Update appointment status to completed
+    db.prepare('UPDATE appointments SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+      .run('completed', id);
+
+    res.json({ success: true, message: 'Customer checked out successfully' });
+  } catch (error) {
+    console.error('Check-out error:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
