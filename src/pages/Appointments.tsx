@@ -109,21 +109,39 @@ const Appointments: React.FC = () => {
   };
 
   const fetchServices = async () => {
-    // Mock services data since we don't have a services endpoint yet
-    setServices([
-      { id: '1', name: 'Haircut & Style', price: 45, duration: 60 },
-      { id: '2', name: 'Hair Color', price: 85, duration: 120 },
-      { id: '3', name: 'Manicure', price: 25, duration: 45 },
-    ]);
+    try {
+      const response = await fetch('http://localhost:3001/api/services');
+      const data = await response.json();
+      if (data.success) {
+        setServices(data.services);
+      }
+    } catch (error) {
+      console.error('Error fetching services:', error);
+      // Fallback to mock data if API fails
+      setServices([
+        { id: '1', name: 'Haircut & Style', price: 45, duration: 60 },
+        { id: '2', name: 'Hair Color', price: 85, duration: 120 },
+        { id: '3', name: 'Manicure', price: 25, duration: 45 },
+      ]);
+    }
   };
 
   const fetchWorkstations = async () => {
-    // Mock workstations data
-    setWorkstations([
-      { id: '1', name: 'Station 1', type: 'Hair Styling' },
-      { id: '2', name: 'Station 2', type: 'Hair Styling' },
-      { id: '3', name: 'Nail Station 1', type: 'Nail Care' },
-    ]);
+    try {
+      const response = await fetch('http://localhost:3001/api/workstations');
+      const data = await response.json();
+      if (data.success) {
+        setWorkstations(data.workstations);
+      }
+    } catch (error) {
+      console.error('Error fetching workstations:', error);
+      // Fallback to mock data if API fails
+      setWorkstations([
+        { id: '1', name: 'Station 1', type: 'Hair Styling' },
+        { id: '2', name: 'Station 2', type: 'Hair Styling' },
+        { id: '3', name: 'Nail Station 1', type: 'Nail Care' },
+      ]);
+    }
   };
 
   const fetchStaff = async () => {

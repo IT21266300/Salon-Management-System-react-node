@@ -18,6 +18,8 @@ import supplierRoutes from './routes/suppliers.js';
 import inventoryRoutes from './routes/inventory.js';
 import salesRoutes from './routes/sales.js';
 import reportRoutes from './routes/reports.js';
+import servicesRoutes from './routes/services.js';
+import workstationsRoutes from './routes/workstations.js';
 
 // Import middleware
 import errorHandler from './middleware/errorHandler.js';
@@ -71,6 +73,8 @@ app.use('/api/suppliers', supplierRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/sales', salesRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/services', servicesRoutes);
+app.use('/api/workstations', workstationsRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

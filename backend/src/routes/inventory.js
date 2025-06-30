@@ -30,15 +30,13 @@ router.post('/', (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { name, description, sku, category, supplierId, purchasePrice, sellingPrice, quantityInStock, reorderLevel } = req.body;
+    const { name, description, category, purchasePrice, sellingPrice, quantityInStock, reorderLevel, supplierId } = req.body;
     const db = req.app.locals.db;
 
     const productId = uuidv4();
-    db.prepare({
-      sql: `INSERT INTO products (id, name, description, sku, category, supplier_id, purchase_price, selling_price, quantity_in_stock, reorder_level).all()
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      args: [productId, name, description, sku, category, supplierId, purchasePrice, sellingPrice, quantityInStock, reorderLevel]
-    });
+    db.prepare(`INSERT INTO products (id, name, description, category, purchase_price, selling_price, quantity_in_stock, reorder_level, supplier_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+      .run(productId, name, description, category, purchasePrice, sellingPrice, quantityInStock, reorderLevel, supplierId);
 
     res.status(201).json({
       success: true,
@@ -55,15 +53,13 @@ router.post('/', (req, res) => {
 router.put('/:id', (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, sku, category, supplierId, purchasePrice, sellingPrice, quantityInStock, reorderLevel } = req.body;
+    const { name, description, category, purchasePrice, sellingPrice, quantityInStock, reorderLevel, supplierId } = req.body;
     const db = req.app.locals.db;
 
-    db.prepare({
-      sql: `UPDATE products SET name = ?, description = ?, sku = ?, category = ?, supplier_id = ?, 
-            purchase_price = ?, selling_price = ?, quantity_in_stock = ?, reorder_level = ?, 
-            updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-      args: [name, description, sku, category, supplierId, purchasePrice, sellingPrice, quantityInStock, reorderLevel, id]
-    }).all();
+    db.prepare(`UPDATE products SET name = ?, description = ?, category = ?, 
+                purchase_price = ?, selling_price = ?, quantity_in_stock = ?, reorder_level = ?, 
+                supplier_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
+      .run(name, description, category, purchasePrice, sellingPrice, quantityInStock, reorderLevel, supplierId, id);
 
     res.json({ success: true, message: 'Product updated successfully' });
   } catch (error) {

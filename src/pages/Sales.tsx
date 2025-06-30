@@ -235,10 +235,25 @@ const Sales: React.FC = () => {
 
   const handleSaveSale = async () => {
     try {
+      // Validation
+      if (!currentSale.staffId) {
+        alert('Please select a staff member');
+        return;
+      }
+
+      if (currentSale.items.length === 0) {
+        alert('Please add at least one item to the sale');
+        return;
+      }
+
       const saleData = {
         customerId: currentSale.customerId || null,
         staffId: currentSale.staffId,
-        items: currentSale.items,
+        items: currentSale.items.map(item => ({
+          productId: item.product_id,
+          quantity: item.quantity,
+          unitPrice: item.unit_price
+        })),
         subtotal: currentSale.subtotal,
         discount: currentSale.discount,
         tax: currentSale.tax,
@@ -259,9 +274,14 @@ const Sales: React.FC = () => {
         fetchSales();
         fetchProducts(); // Refresh to update stock levels
         handleCloseDialog();
+      } else {
+        const errorData = await response.json();
+        console.error('Error saving sale:', errorData);
+        alert('Error saving sale. Please try again.');
       }
     } catch (error) {
       console.error('Error saving sale:', error);
+      alert('Error saving sale. Please check your connection.');
     }
   };
 

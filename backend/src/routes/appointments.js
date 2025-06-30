@@ -41,11 +41,9 @@ router.post('/', (req, res) => {
     const db = req.app.locals.db;
 
     const appointmentId = uuidv4();
-    db.prepare({
-      sql: `INSERT INTO appointments (id, customer_id, service_id, workstation_id, staff_id, date, time, duration, total_amount, notes).all()
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      args: [appointmentId, customerId, serviceId, workstationId, staffId, date, time, duration, totalAmount, notes]
-    });
+    db.prepare(`INSERT INTO appointments (id, customer_id, service_id, workstation_id, staff_id, date, time, duration, total_amount, notes)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+      .run(appointmentId, customerId, serviceId, workstationId, staffId, date, time, duration, totalAmount, notes);
 
     res.status(201).json({
       success: true,
@@ -65,10 +63,8 @@ router.put('/:id', (req, res) => {
     const { status, notes } = req.body;
     const db = req.app.locals.db;
 
-    db.prepare({
-      sql: 'UPDATE appointments SET status = ?, notes = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-      args: [status, notes, id]
-    }).all();
+    db.prepare('UPDATE appointments SET status = ?, notes = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+      .run(status, notes, id);
 
     res.json({ success: true, message: 'Appointment updated successfully' });
   } catch (error) {

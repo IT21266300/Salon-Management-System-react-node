@@ -8,6 +8,8 @@ const router = express.Router();
 router.get('/', (req, res) => {
   try {
     const db = req.app.locals.db;
+    
+    // Get sales with customer and staff information
     const sales = db.prepare(`
       SELECT s.*, 
              c.first_name as customer_first_name, 
@@ -19,6 +21,21 @@ router.get('/', (req, res) => {
       LEFT JOIN users u ON s.staff_id = u.id
       ORDER BY s.sale_date DESC
     `).all();
+
+    // Get sale items for each sale
+    for (let sale of sales) {
+      const items = db.prepare(`
+        SELECT si.*, p.name as product_name
+        FROM sale_items si
+        LEFT JOIN products p ON si.product_id = p.id
+        WHERE si.sale_id = ?
+      `).all(sale.id);
+      
+      sale.items = items;
+      sale.customer_name = sale.customer_first_name ? 
+        `${sale.customer_first_name} ${sale.customer_last_name}` : null;
+      sale.staff_name = `${sale.staff_first_name} ${sale.staff_last_name}`;
+    }
 
     res.json({ success: true, sales });
   } catch (error) {
@@ -51,16 +68,24 @@ router.post('/', [
     `);
     insertSale.run(saleId, customerId, staffId, subtotal, discount, tax, total, paymentMethod, notes);
 
-    // Insert sale items
+    // Insert sale items and update product stock
     const insertSaleItem = db.prepare(`
       INSERT INTO sale_items (id, sale_id, product_id, quantity, unit_price, total_price)
       VALUES (?, ?, ?, ?, ?, ?)
+    `);
+
+    const updateProductStock = db.prepare(`
+      UPDATE products SET quantity_in_stock = quantity_in_stock - ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
     `);
 
     for (const item of items) {
       const itemId = uuidv4();
       const itemTotal = item.quantity * item.unitPrice;
       insertSaleItem.run(itemId, saleId, item.productId, item.quantity, item.unitPrice, itemTotal);
+      
+      // Update product stock
+      updateProductStock.run(item.quantity, item.productId);
     }
 
     res.status(201).json({
