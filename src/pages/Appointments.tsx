@@ -87,7 +87,7 @@ const Appointments: React.FC = () => {
 
   const fetchAppointments = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/appointments');
+      const response = await fetch('http://localhost:3000/api/appointments');
       const data = await response.json();
       if (data.success) {
         setAppointments(data.appointments);
@@ -101,7 +101,7 @@ const Appointments: React.FC = () => {
 
   const fetchCustomers = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/customers');
+      const response = await fetch('http://localhost:3000/api/customers');
       const data = await response.json();
       if (data.success) {
         setCustomers(data.customers);
@@ -113,7 +113,7 @@ const Appointments: React.FC = () => {
 
   const fetchServices = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/services');
+      const response = await fetch('http://localhost:3000/api/services');
       const data = await response.json();
       if (data.success) {
         setServices(data.services);
@@ -131,7 +131,7 @@ const Appointments: React.FC = () => {
 
   const fetchWorkstations = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/workstations');
+      const response = await fetch('http://localhost:3000/api/workstations');
       const data = await response.json();
       if (data.success) {
         setWorkstations(data.workstations);
@@ -149,7 +149,7 @@ const Appointments: React.FC = () => {
 
   const fetchStaff = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/users');
+      const response = await fetch('http://localhost:3000/api/users');
       const data = await response.json();
       if (data.success) {
         setStaff(data.users.filter((user: any) => user.role === 'staff' || user.role === 'manager'));
@@ -212,8 +212,8 @@ const Appointments: React.FC = () => {
       };
 
       const url = editingAppointment 
-        ? `http://localhost:3001/api/appointments/${editingAppointment.id}`
-        : 'http://localhost:3001/api/appointments';
+        ? `http://localhost:3000/api/appointments/${editingAppointment.id}`
+        : 'http://localhost:3000/api/appointments';
       
       const method = editingAppointment ? 'PUT' : 'POST';
 
@@ -236,7 +236,7 @@ const Appointments: React.FC = () => {
 
   const handleCheckIn = async (appointmentId: string) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/appointments/${appointmentId}/checkin`, {
+      const response = await fetch(`http://localhost:3000/api/appointments/${appointmentId}/checkin`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -255,7 +255,7 @@ const Appointments: React.FC = () => {
 
   const handleCheckOut = async (appointmentId: string) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/appointments/${appointmentId}/checkout`, {
+      const response = await fetch(`http://localhost:3000/api/appointments/${appointmentId}/checkout`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

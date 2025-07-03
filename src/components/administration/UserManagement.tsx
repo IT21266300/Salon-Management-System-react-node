@@ -1,4 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState, AppDispatch } from '../../store';
+import {
+  fetchUsers,
+  createUser,
+  updateUser,
+  deleteUser,
+  updateUserStatus,
+  clearError,
+  User,
+} from '../../store/userSlice';
 import {
   Box,
   Button,
@@ -21,48 +32,20 @@ import {
   Select,
   MenuItem,
   Alert,
+  CircularProgress,
+  Snackbar,
 } from '@mui/material';
 import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
   Lock as LockIcon,
+  LockOpen as LockOpenIcon,
 } from '@mui/icons-material';
 
-interface User {
-  id: string;
-  username: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: 'admin' | 'manager' | 'staff' | 'cashier';
-  status: 'active' | 'inactive';
-  createdAt: string;
-}
-
 const UserManagement: React.FC = () => {
-  const [users, setUsers] = useState<User[]>([
-    {
-      id: '1',
-      username: 'admin',
-      email: 'admin@brilliancesalon.com',
-      firstName: 'Admin',
-      lastName: 'User',
-      role: 'admin',
-      status: 'active',
-      createdAt: '2024-01-01',
-    },
-    {
-      id: '2',
-      username: 'manager1',
-      email: 'manager@brilliancesalon.com',
-      firstName: 'Jane',
-      lastName: 'Smith',
-      role: 'manager',
-      status: 'active',
-      createdAt: '2024-01-02',
-    },
-  ]);
+  const dispatch = useDispatch<AppDispatch>();
+  const { users, loading, error } = useSelector((state: RootState) => state.users);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -74,6 +57,18 @@ const UserManagement: React.FC = () => {
     role: 'staff' as User['role'],
     password: '',
   });
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+
+  useEffect(() => {
+    dispatch(fetchUsers());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (error) {
+      setSnackbar({ open: true, message: error, severity: 'error' });
+      dispatch(clearError());
+    }
+  }, [error, dispatch]);
 
   const handleOpenDialog = (user?: User) => {
     if (user) {
@@ -105,23 +100,63 @@ const UserManagement: React.FC = () => {
     setEditingUser(null);
   };
 
-  const handleSaveUser = () => {
-    if (editingUser) {
-      setUsers(users.map(u => u.id === editingUser.id ? { ...u, ...formData } : u));
-    } else {
-      const newUser: User = {
-        id: Date.now().toString(),
-        ...formData,
-        status: 'active',
-        createdAt: new Date().toISOString().split('T')[0],
-      };
-      setUsers([...users, newUser]);
+  const handleSaveUser = async () => {
+    try {
+      if (editingUser) {
+        await dispatch(updateUser({
+          id: editingUser.id,
+          username: formData.username,
+          email: formData.email,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          role: formData.role,
+          password: formData.password,
+        })).unwrap();
+        setSnackbar({ open: true, message: 'User updated successfully', severity: 'success' });
+      } else {
+        if (!formData.password) {
+          setSnackbar({ open: true, message: 'Password is required for new users', severity: 'error' });
+          return;
+        }
+        await dispatch(createUser({
+          username: formData.username,
+          email: formData.email,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          role: formData.role,
+          password: formData.password,
+        })).unwrap();
+        setSnackbar({ open: true, message: 'User created successfully', severity: 'success' });
+      }
+      handleCloseDialog();
+    } catch (error: unknown) {
+      setSnackbar({ open: true, message: error instanceof Error ? error.message : 'Operation failed', severity: 'error' });
     }
-    handleCloseDialog();
   };
 
-  const handleDeleteUser = (userId: string) => {
-    setUsers(users.filter(u => u.id !== userId));
+  const handleDeleteUser = async (userId: string) => {
+    if (window.confirm('Are you sure you want to delete this user?')) {
+      try {
+        await dispatch(deleteUser(userId)).unwrap();
+        setSnackbar({ open: true, message: 'User deleted successfully', severity: 'success' });
+      } catch (error: unknown) {
+        setSnackbar({ open: true, message: error instanceof Error ? error.message : 'Delete failed', severity: 'error' });
+      }
+    }
+  };
+
+  const handleToggleUserStatus = async (userId: string, currentStatus: 'active' | 'inactive') => {
+    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+    try {
+      await dispatch(updateUserStatus({ id: userId, status: newStatus })).unwrap();
+      setSnackbar({ 
+        open: true, 
+        message: `User ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`, 
+        severity: 'success' 
+      });
+    } catch (error: unknown) {
+      setSnackbar({ open: true, message: error instanceof Error ? error.message : 'Status update failed', severity: 'error' });
+    }
   };
 
   const getRoleColor = (role: string) => {
@@ -134,6 +169,10 @@ const UserManagement: React.FC = () => {
     }
   };
 
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
+
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -144,61 +183,72 @@ const UserManagement: React.FC = () => {
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => handleOpenDialog()}
+          disabled={loading}
         >
           Add User
         </Button>
       </Box>
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Username</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Role</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Created</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {users.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell>{user.firstName} {user.lastName}</TableCell>
-                <TableCell>{user.username}</TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>
-                  <Chip
-                    label={user.role}
-                    color={getRoleColor(user.role) as any}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    label={user.status}
-                    color={user.status === 'active' ? 'success' : 'default'}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell>{user.createdAt}</TableCell>
-                <TableCell>
-                  <IconButton onClick={() => handleOpenDialog(user)} size="small">
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton onClick={() => handleDeleteUser(user.id)} size="small">
-                    <DeleteIcon />
-                  </IconButton>
-                  <IconButton size="small">
-                    <LockIcon />
-                  </IconButton>
-                </TableCell>
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+          <CircularProgress />
+        </Box>
+      ) : (
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Name</TableCell>
+                <TableCell>Username</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell>Role</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell>Created</TableCell>
+                <TableCell>Actions</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {users.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell>{user.firstName} {user.lastName}</TableCell>
+                  <TableCell>{user.username}</TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>
+                    <Chip
+                      label={user.role}
+                      color={getRoleColor(user.role) as 'error' | 'warning' | 'info' | 'success' | 'default'}
+                      size="small"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={user.status}
+                      color={user.status === 'active' ? 'success' : 'default'}
+                      size="small"
+                    />
+                  </TableCell>
+                  <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
+                  <TableCell>
+                    <IconButton onClick={() => handleOpenDialog(user)} size="small">
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton onClick={() => handleDeleteUser(user.id)} size="small">
+                      <DeleteIcon />
+                    </IconButton>
+                    <IconButton 
+                      onClick={() => handleToggleUserStatus(user.id, user.status)} 
+                      size="small"
+                      title={user.status === 'active' ? 'Deactivate user' : 'Activate user'}
+                    >
+                      {user.status === 'active' ? <LockIcon /> : <LockOpenIcon />}
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
 
       {/* Add/Edit User Dialog */}
       <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="md" fullWidth>
@@ -212,18 +262,21 @@ const UserManagement: React.FC = () => {
               value={formData.firstName}
               onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
               fullWidth
+              required
             />
             <TextField
               label="Last Name"
               value={formData.lastName}
               onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
               fullWidth
+              required
             />
             <TextField
               label="Username"
               value={formData.username}
               onChange={(e) => setFormData({ ...formData, username: e.target.value })}
               fullWidth
+              required
             />
             <TextField
               label="Email"
@@ -231,6 +284,7 @@ const UserManagement: React.FC = () => {
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               fullWidth
+              required
             />
             <FormControl fullWidth>
               <InputLabel>Role</InputLabel>
@@ -250,16 +304,32 @@ const UserManagement: React.FC = () => {
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               fullWidth
+              required={!editingUser}
             />
           </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button onClick={handleSaveUser} variant="contained">
+          <Button onClick={handleSaveUser} variant="contained" disabled={loading}>
             {editingUser ? 'Update' : 'Create'}
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

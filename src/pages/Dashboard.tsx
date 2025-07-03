@@ -48,14 +48,14 @@ const Dashboard: React.FC = () => {
   const fetchDashboardData = async () => {
     try {
       // Fetch dashboard stats
-      const statsResponse = await fetch('http://localhost:3001/api/reports/dashboard-stats');
+      const statsResponse = await fetch('http://localhost:3000/api/reports/dashboard-stats');
       const statsData = await statsResponse.json();
       if (statsData.success) {
         setStats(statsData.stats);
       }
 
       // Fetch appointments
-      const appointmentsResponse = await fetch('http://localhost:3001/api/appointments');
+      const appointmentsResponse = await fetch('http://localhost:3000/api/appointments');
       const appointmentsData = await appointmentsResponse.json();
       if (appointmentsData.success) {
         const todayAppointments = appointmentsData.appointments.filter((apt: any) => 
@@ -65,7 +65,7 @@ const Dashboard: React.FC = () => {
       }
 
       // Fetch products for low stock alerts
-      const productsResponse = await fetch('http://localhost:3001/api/inventory');
+      const productsResponse = await fetch('http://localhost:3000/api/inventory');
       const productsData = await productsResponse.json();
       if (productsData.success) {
         const lowStock = productsData.products.filter((product: any) => 

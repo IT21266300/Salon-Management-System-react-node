@@ -114,7 +114,7 @@ const Sales: React.FC = () => {
 
   const fetchSales = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/sales');
+      const response = await fetch('http://localhost:3000/api/sales');
       const data = await response.json();
       if (data.success) {
         setSales(data.sales);
@@ -128,7 +128,7 @@ const Sales: React.FC = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/inventory');
+      const response = await fetch('http://localhost:3000/api/inventory');
       const data = await response.json();
       if (data.success) {
         setProducts(data.products.filter((p: Product) => p.quantity_in_stock > 0));
@@ -140,7 +140,7 @@ const Sales: React.FC = () => {
 
   const fetchCustomers = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/customers');
+      const response = await fetch('http://localhost:3000/api/customers');
       const data = await response.json();
       if (data.success) {
         setCustomers(data.customers);
@@ -152,7 +152,7 @@ const Sales: React.FC = () => {
 
   const fetchStaff = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/users');
+      const response = await fetch('http://localhost:3000/api/users');
       const data = await response.json();
       if (data.success) {
         setStaff(data.users);
@@ -262,7 +262,7 @@ const Sales: React.FC = () => {
         notes: currentSale.notes,
       };
 
-      const response = await fetch('http://localhost:3001/api/sales', {
+      const response = await fetch('http://localhost:3000/api/sales', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

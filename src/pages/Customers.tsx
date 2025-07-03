@@ -73,7 +73,7 @@ const Customers: React.FC = () => {
 
   const fetchCustomers = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/customers');
+      const response = await fetch('http://localhost:3000/api/customers');
       const data = await response.json();
       if (data.success) {
         setCustomers(data.customers);
@@ -122,8 +122,8 @@ const Customers: React.FC = () => {
   const handleSaveCustomer = async () => {
     try {
       const url = editingCustomer 
-        ? `http://localhost:3001/api/customers/${editingCustomer.id}`
-        : 'http://localhost:3001/api/customers';
+        ? `http://localhost:3000/api/customers/${editingCustomer.id}`
+        : 'http://localhost:3000/api/customers';
       
       const method = editingCustomer ? 'PUT' : 'POST';
 
@@ -147,7 +147,7 @@ const Customers: React.FC = () => {
   const handleDeleteCustomer = async (customerId: string) => {
     if (window.confirm('Are you sure you want to delete this customer?')) {
       try {
-        const response = await fetch(`http://localhost:3001/api/customers/${customerId}`, {
+        const response = await fetch(`http://localhost:3000/api/customers/${customerId}`, {
           method: 'DELETE',
         });
 

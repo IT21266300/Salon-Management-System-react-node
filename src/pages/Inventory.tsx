@@ -82,7 +82,7 @@ const Inventory: React.FC = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/inventory');
+      const response = await fetch('http://localhost:3000/api/inventory');
       const data = await response.json();
       if (data.success) {
         setProducts(data.products);
@@ -96,7 +96,7 @@ const Inventory: React.FC = () => {
 
   const fetchSuppliers = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/suppliers');
+      const response = await fetch('http://localhost:3000/api/suppliers');
       const data = await response.json();
       if (data.success) {
         setSuppliers(data.suppliers);
@@ -145,8 +145,8 @@ const Inventory: React.FC = () => {
   const handleSaveProduct = async () => {
     try {
       const url = editingProduct 
-        ? `http://localhost:3001/api/inventory/${editingProduct.id}`
-        : 'http://localhost:3001/api/inventory';
+        ? `http://localhost:3000/api/inventory/${editingProduct.id}`
+        : 'http://localhost:3000/api/inventory';
       
       const method = editingProduct ? 'PUT' : 'POST';
 

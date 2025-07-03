@@ -79,7 +79,7 @@ const Reports: React.FC = () => {
 
   const fetchDashboardStats = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/reports/dashboard-stats');
+      const response = await fetch('http://localhost:3000/api/reports/dashboard-stats');
       const data = await response.json();
       if (data.success) {
         setStats(data.stats);
@@ -91,7 +91,7 @@ const Reports: React.FC = () => {
 
   const fetchSales = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/sales');
+      const response = await fetch('http://localhost:3000/api/sales');
       const data = await response.json();
       if (data.success) {
         setSales(data.sales);
@@ -105,7 +105,7 @@ const Reports: React.FC = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/inventory');
+      const response = await fetch('http://localhost:3000/api/inventory');
       const data = await response.json();
       if (data.success) {
         setProducts(data.products);
