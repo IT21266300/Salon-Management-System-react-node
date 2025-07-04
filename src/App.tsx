@@ -16,6 +16,7 @@ import Inventory from './pages/Inventory';
 import Sales from './pages/Sales';
 import Reports from './pages/Reports';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import Profile from './pages/Profile';
 
 
 function App() {
@@ -55,6 +56,7 @@ function App() {
         <Route path="/inventory" element={<Inventory />} />
         <Route path="/sales" element={<Sales />} />
         <Route path="/reports" element={<Reports />} />
+        <Route path="/profile" element={<Profile />} />
       </Routes>
     </Layout>
   );

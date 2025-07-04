@@ -16,10 +16,12 @@ import {
   Logout as LogoutIcon,
 } from '@mui/icons-material';
 import { RootState } from '../../store';
+import { useNavigate } from 'react-router-dom';
 import { logout } from '../../store/authSlice';
 
 const Header: React.FC = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { user } = useSelector((state: RootState) => state.auth);
   const { lowStockAlerts } = useSelector((state: RootState) => state.inventory);
   
@@ -29,8 +31,14 @@ const Header: React.FC = () => {
     setAnchorEl(event.currentTarget);
   };
 
+
   const handleClose = () => {
     setAnchorEl(null);
+  };
+
+  const handleProfile = () => {
+    handleClose();
+    navigate('/profile');
   };
 
   const handleLogout = () => {
@@ -82,7 +90,7 @@ const Header: React.FC = () => {
           open={Boolean(anchorEl)}
           onClose={handleClose}
         >
-          <MenuItem onClick={handleClose}>
+          <MenuItem onClick={handleProfile}>
             <AccountIcon sx={{ mr: 2 }} />
             Profile
           </MenuItem>
