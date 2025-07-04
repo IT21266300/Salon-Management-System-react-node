@@ -41,12 +41,12 @@ interface Customer {
   email: string;
   phone: string;
   address: string;
-  date_of_birth: string;
+  // date_of_birth: string;
   gender: 'male' | 'female' | 'other';
   notes: string;
   total_visits: number;
   total_spent: number;
-  last_visit: string;
+  // last_visit: string;
   created_at: string;
 }
 
@@ -94,7 +94,7 @@ const Customers: React.FC = () => {
         email: customer.email,
         phone: customer.phone,
         address: customer.address,
-        dateOfBirth: customer.date_of_birth,
+        dateOfBirth: '', // keep required property, but leave blank
         gender: customer.gender,
         notes: customer.notes,
       });
@@ -106,7 +106,7 @@ const Customers: React.FC = () => {
         email: '',
         phone: '',
         address: '',
-        dateOfBirth: '',
+        dateOfBirth: '', // keep required property, but leave blank
         gender: '',
         notes: '',
       });
@@ -255,7 +255,7 @@ const Customers: React.FC = () => {
               <TableCell>Gender</TableCell>
               <TableCell>Total Visits</TableCell>
               <TableCell>Total Spent</TableCell>
-              <TableCell>Last Visit</TableCell>
+              {/* <TableCell>Last Visit</TableCell> */}
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -292,9 +292,9 @@ const Customers: React.FC = () => {
                 </TableCell>
                 <TableCell>{customer.total_visits}</TableCell>
                 <TableCell>${customer.total_spent?.toFixed(2) || '0.00'}</TableCell>
-                <TableCell>
+                {/* <TableCell>
                   {customer.last_visit ? new Date(customer.last_visit).toLocaleDateString() : 'Never'}
-                </TableCell>
+                </TableCell> */}
                 <TableCell>
                   <IconButton onClick={() => handleOpenDialog(customer)} size="small">
                     <EditIcon />
@@ -359,6 +359,7 @@ const Customers: React.FC = () => {
                 fullWidth
               />
             </Grid>
+            {/*
             <Grid item xs={12} md={6}>
               <TextField
                 label="Date of Birth"
@@ -369,6 +370,7 @@ const Customers: React.FC = () => {
                 InputLabelProps={{ shrink: true }}
               />
             </Grid>
+            */}
             <Grid item xs={12} md={6}>
               <FormControl fullWidth>
                 <InputLabel>Gender</InputLabel>

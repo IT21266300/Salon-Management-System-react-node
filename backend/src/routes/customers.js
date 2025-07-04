@@ -98,12 +98,16 @@ router.delete('/:id', (req, res) => {
   try {
     const { id } = req.params;
     const db = req.app.locals.db;
-
-    const deleteCustomer = db.prepare('DELETE FROM customers WHERE id = ?');
-    deleteCustomer.run(id);
-
-    res.json({ success: true, message: 'Customer deleted successfully' });
+    db.pragma('foreign_keys = ON'); // Ensure FK enforcement is ON for this connection
+    db.exec('BEGIN TRANSACTION');
+    // Delete all appointments for this customer first
+    db.prepare('DELETE FROM appointments WHERE customer_id = ?').run(id);
+    // Now delete the customer
+    db.prepare('DELETE FROM customers WHERE id = ?').run(id);
+    db.exec('COMMIT');
+    res.json({ success: true, message: 'Customer and related appointments deleted successfully' });
   } catch (error) {
+    try { req.app.locals.db.exec('ROLLBACK'); } catch (e) {}
     console.error('Delete customer error:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
