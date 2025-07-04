@@ -1,6 +1,9 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from './store';
+import type { AppDispatch } from './store';
+import { useEffect } from 'react';
+import { validateTokenAndLoadUser } from './store/authSlice';
 import Layout from './components/common/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -14,8 +17,19 @@ import Sales from './pages/Sales';
 import Reports from './pages/Reports';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
+
 function App() {
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const dispatch: AppDispatch = useDispatch();
+  const { isAuthenticated, loading } = useSelector((state: RootState) => state.auth);
+
+  useEffect(() => {
+    // On mount, validate token if present
+    dispatch(validateTokenAndLoadUser());
+  }, [dispatch]);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   if (!isAuthenticated) {
     return <Login />;
