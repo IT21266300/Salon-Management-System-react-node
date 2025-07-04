@@ -208,6 +208,7 @@ const Appointments: React.FC = () => {
         time: formData.time.format('HH:mm'),
         duration: formData.duration,
         totalAmount: formData.totalAmount,
+        status: formData.status, // Include status
         notes: formData.notes,
       };
 
@@ -544,7 +545,23 @@ const Appointments: React.FC = () => {
                 InputProps={{ startAdornment: '$' }}
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Status</InputLabel>
+                <Select
+                  value={formData.status}
+                  label="Status"
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                >
+                  <MenuItem value="pending">Pending</MenuItem>
+                  <MenuItem value="confirmed">Confirmed</MenuItem>
+                  <MenuItem value="in-progress">In Progress</MenuItem>
+                  <MenuItem value="completed">Completed</MenuItem>
+                  <MenuItem value="cancelled">Cancelled</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={6}>
               <TextField
                 label="Notes"
                 multiline
