@@ -73,6 +73,7 @@ const Inventory: React.FC = () => {
     sellingPrice: 0,
     quantityInStock: 0,
     reorderLevel: 10,
+    status: 'active' as 'active' | 'inactive',
   });
 
   useEffect(() => {
@@ -119,6 +120,7 @@ const Inventory: React.FC = () => {
         sellingPrice: product.selling_price,
         quantityInStock: product.quantity_in_stock,
         reorderLevel: product.reorder_level,
+        status: product.status,
       });
     } else {
       setEditingProduct(null);
@@ -132,6 +134,7 @@ const Inventory: React.FC = () => {
         sellingPrice: 0,
         quantityInStock: 0,
         reorderLevel: 10,
+        status: 'active',
       });
     }
     setDialogOpen(true);
@@ -263,7 +266,7 @@ const Inventory: React.FC = () => {
           <TableHead>
             <TableRow>
               <TableCell>Product</TableCell>
-              <TableCell>SKU</TableCell>
+              
               <TableCell>Category</TableCell>
               <TableCell>Supplier</TableCell>
               <TableCell>Purchase Price</TableCell>
@@ -286,7 +289,7 @@ const Inventory: React.FC = () => {
                     </Typography>
                   </Box>
                 </TableCell>
-                <TableCell>{product.sku}</TableCell>
+                
                 <TableCell>{product.category}</TableCell>
                 <TableCell>{product.supplier_name}</TableCell>
                 <TableCell>${product.purchase_price.toFixed(2)}</TableCell>
@@ -339,14 +342,7 @@ const Inventory: React.FC = () => {
                 required
               />
             </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                label="SKU"
-                value={formData.sku}
-                onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                fullWidth
-              />
-            </Grid>
+
             <Grid item xs={12}>
               <TextField
                 label="Description"
@@ -417,6 +413,19 @@ const Inventory: React.FC = () => {
                 onChange={(e) => setFormData({ ...formData, reorderLevel: parseInt(e.target.value) })}
                 fullWidth
               />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Status</InputLabel>
+                <Select
+                  value={formData.status}
+                  label="Status"
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' })}
+                >
+                  <MenuItem value="active">Active</MenuItem>
+                  <MenuItem value="inactive">Inactive</MenuItem>
+                </Select>
+              </FormControl>
             </Grid>
           </Grid>
         </DialogContent>

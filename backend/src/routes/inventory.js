@@ -53,13 +53,13 @@ router.post('/', (req, res) => {
 router.put('/:id', (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, category, purchasePrice, sellingPrice, quantityInStock, reorderLevel, supplierId } = req.body;
+    const { name, description, category, purchasePrice, sellingPrice, quantityInStock, reorderLevel, supplierId, status } = req.body;
     const db = req.app.locals.db;
 
     db.prepare(`UPDATE products SET name = ?, description = ?, category = ?, 
                 purchase_price = ?, selling_price = ?, quantity_in_stock = ?, reorder_level = ?, 
-                supplier_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
-      .run(name, description, category, purchasePrice, sellingPrice, quantityInStock, reorderLevel, supplierId, id);
+                supplier_id = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
+      .run(name, description, category, purchasePrice, sellingPrice, quantityInStock, reorderLevel, supplierId, status, id);
 
     res.json({ success: true, message: 'Product updated successfully' });
   } catch (error) {
