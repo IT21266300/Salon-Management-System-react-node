@@ -21,9 +21,9 @@ router.get('/', (req, res) => {
         SELECT 
           customer_id,
           COUNT(*) as total_visits,
-          SUM(total_amount) as total_spent,
-          MAX(date) as last_visit
-        FROM appointments 
+          SUM(total) as total_spent,
+          MAX(sale_date) as last_visit
+        FROM sales
         WHERE status = 'completed'
         GROUP BY customer_id
       ) visit_stats ON c.id = visit_stats.customer_id
