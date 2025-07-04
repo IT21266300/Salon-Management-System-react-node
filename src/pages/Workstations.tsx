@@ -114,6 +114,7 @@ const Workstations: React.FC = () => {
     type: '',
     status: 'available',
   });
+  const [assignError, setAssignError] = useState<string | null>(null);
 
   useEffect(() => {
     dispatch(fetchWorkstations());
@@ -173,13 +174,15 @@ const Workstations: React.FC = () => {
     }
   };
 
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const handleDelete = async (workstationId: string) => {
+    setDeleteError(null);
     if (window.confirm('Are you sure you want to delete this workstation? This action cannot be undone.')) {
       try {
         await dispatch(deleteWorkstation(workstationId)).unwrap();
         dispatch(fetchWorkstations());
-      } catch (error) {
-        console.error('Error deleting workstation:', error);
+      } catch (error: any) {
+        setDeleteError(error?.message || (typeof error === 'string' ? error : 'Failed to delete workstation'));
       }
     }
   };
@@ -222,16 +225,20 @@ const Workstations: React.FC = () => {
 
   const handleAssignStaff = async () => {
     if (!selectedWorkstation || !selectedStaffId) return;
-
+    setAssignError(null);
     try {
-      await dispatch(assignStaffToWorkstation({
+      const result = await dispatch(assignStaffToWorkstation({
         workstationId: selectedWorkstation.id,
         staffId: selectedStaffId
       })).unwrap();
-      handleCloseStaffDialog();
-      dispatch(fetchWorkstations());
-    } catch (error) {
-      console.error('Error assigning staff:', error);
+      if (result && result.success) {
+        handleCloseStaffDialog();
+        dispatch(fetchWorkstations());
+      } else if (result && result.message) {
+        setAssignError(result.message);
+      }
+    } catch (err: any) {
+      setAssignError(err?.message || (typeof err === 'string' ? err : 'Failed to assign staff'));
     }
   };
 
@@ -311,6 +318,11 @@ const Workstations: React.FC = () => {
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
           {error}
+        </Alert>
+      )}
+      {deleteError && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {deleteError}
         </Alert>
       )}
 
@@ -588,14 +600,32 @@ const Workstations: React.FC = () => {
                 value={selectedStaffId}
                 label="Select Staff Member"
                 onChange={(e) => setSelectedStaffId(e.target.value)}
+                disabled={availableStaff.length === 0}
               >
-                {availableStaff.map((staff) => (
-                  <MenuItem key={staff.id} value={staff.id}>
-                    {staff.first_name} {staff.last_name} ({staff.email})
+                {availableStaff.length === 0 ? (
+                  <MenuItem value="" disabled>
+                    No staff available
                   </MenuItem>
-                ))}
+                ) : (
+                  availableStaff.map((staff) => (
+                    <MenuItem key={staff.id} value={staff.id}>
+                      {staff.first_name} {staff.last_name} ({staff.email})
+                    </MenuItem>
+                  ))
+                )}
               </Select>
             </FormControl>
+            {availableStaff.length === 0 && (
+              <Typography color="text.secondary" variant="body2" sx={{ mt: 2 }}>
+                No staff available to assign. Please add staff users first.
+              </Typography>
+            )}
+            {error && (
+              <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>
+            )}
+            {assignError && (
+              <Alert severity="error" sx={{ mt: 2 }}>{assignError}</Alert>
+            )}
           </Box>
         </DialogContent>
         <DialogActions>
@@ -617,7 +647,7 @@ const Workstations: React.FC = () => {
         </DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 1 }}>
-            {workstationAppointments.length > 0 ? (
+            {(workstationAppointments && workstationAppointments.length > 0) ? (
               <Grid container spacing={2}>
                 {workstationAppointments.map((appointment) => (
                   <Grid item xs={12} key={appointment.id}>

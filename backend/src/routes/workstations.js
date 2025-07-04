@@ -232,7 +232,7 @@ router.delete('/:id', (req, res) => {
     res.json({ success: true, message: 'Workstation deleted successfully' });
   } catch (error) {
     console.error('Delete workstation error:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: 'Internal server error', error: error?.message || error });
   }
 });
 

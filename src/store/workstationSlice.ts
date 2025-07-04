@@ -200,12 +200,12 @@ export const assignStaffToWorkstation = createAsyncThunk(
         body: JSON.stringify({ staffId }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to assign staff');
+      const data = await response.json();
+      if (!response.ok || data.success === false) {
+        throw new Error(data.message || 'Failed to assign staff');
       }
 
-      return await response.json();
+      return data;
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : 'Unknown error');
     }
