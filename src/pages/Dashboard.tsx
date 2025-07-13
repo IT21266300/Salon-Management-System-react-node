@@ -23,6 +23,23 @@ import {
 } from '@mui/icons-material';
 import dayjs from 'dayjs';
 
+interface Appointment {
+  id: string;
+  date: string;
+  time: string;
+  customer_name: string;
+  service_name: string;
+  workstation_name?: string;
+  status: string;
+}
+
+interface Product {
+  id: string;
+  name: string;
+  quantity_in_stock: number;
+  reorder_level: number;
+}
+
 interface DashboardStats {
   dailyTotal: number;
   monthlyTotal: number;
@@ -37,8 +54,8 @@ const Dashboard: React.FC = () => {
     totalCustomers: 0,
     todayAppointments: 0,
   });
-  const [appointments, setAppointments] = useState<any[]>([]);
-  const [lowStockProducts, setLowStockProducts] = useState<any[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [lowStockProducts, setLowStockProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -54,12 +71,13 @@ const Dashboard: React.FC = () => {
         setStats(statsData.stats);
       }
 
-      // Fetch appointments
+      // Fetch appointments for today
       const appointmentsResponse = await fetch('http://localhost:3000/api/appointments');
       const appointmentsData = await appointmentsResponse.json();
       if (appointmentsData.success) {
-        const todayAppointments = appointmentsData.appointments.filter((apt: any) => 
-          apt.date === dayjs().format('YYYY-MM-DD')
+        const today = dayjs().format('YYYY-MM-DD');
+        const todayAppointments = appointmentsData.appointments.filter((apt: Appointment) => 
+          apt.date === today
         );
         setAppointments(todayAppointments);
       }
@@ -68,7 +86,7 @@ const Dashboard: React.FC = () => {
       const productsResponse = await fetch('http://localhost:3000/api/inventory');
       const productsData = await productsResponse.json();
       if (productsData.success) {
-        const lowStock = productsData.products.filter((product: any) => 
+        const lowStock = productsData.products.filter((product: Product) => 
           product.quantity_in_stock <= product.reorder_level
         );
         setLowStockProducts(lowStock);
