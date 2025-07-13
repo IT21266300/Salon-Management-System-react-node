@@ -21,17 +21,31 @@ import Profile from './pages/Profile';
 
 function App() {
   const dispatch: AppDispatch = useDispatch();
-  const { isAuthenticated, loading } = useSelector((state: RootState) => state.auth);
+  const { isAuthenticated, loading, token } = useSelector((state: RootState) => state.auth);
 
   useEffect(() => {
-    // On mount, validate token if present
-    dispatch(validateTokenAndLoadUser());
-  }, [dispatch]);
+    // Only validate token if one exists in localStorage
+    if (token) {
+      dispatch(validateTokenAndLoadUser());
+    }
+  }, [dispatch, token]);
 
+  // Show loading spinner while validating token
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        fontSize: '18px' 
+      }}>
+        Loading...
+      </div>
+    );
   }
 
+  // Show login page if not authenticated
   if (!isAuthenticated) {
     return <Login />;
   }
