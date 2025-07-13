@@ -9,7 +9,7 @@ router.get('/', (req, res) => {
   try {
     const db = req.app.locals.db;
     const users = db.prepare(`
-      SELECT id, username, email, first_name, last_name, role, status, created_at, updated_at
+      SELECT id, username, email, first_name, last_name, role, status, profile_picture, created_at, updated_at
       FROM users
       ORDER BY created_at DESC
     `).all();

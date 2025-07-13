@@ -21,6 +21,7 @@ import {
   Assessment as ReportsIcon,
   AdminPanelSettings as AdminIcon,
   Spa as SpaIcon,
+  ContentCut as ServicesIcon,
   WorkspacePremium as WorkstationsIcon,
 } from '@mui/icons-material';
 import { useSelector } from 'react-redux';
@@ -32,6 +33,7 @@ const menuItems = [
   { path: '/customers', label: 'Customers', icon: <PersonIcon /> },
   { path: '/workstations', label: 'Workstations', icon: <WorkstationsIcon /> },
   { path: '/suppliers', label: 'Suppliers', icon: <SupplierIcon /> },
+  { path: '/services', label: 'Services', icon: <ServicesIcon /> },
   { path: '/inventory', label: 'Inventory', icon: <InventoryIcon /> },
   { path: '/sales', label: 'Sales', icon: <SalesIcon /> },
   { path: '/reports', label: 'Reports', icon: <ReportsIcon /> },

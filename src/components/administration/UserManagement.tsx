@@ -34,6 +34,9 @@ import {
   Alert,
   CircularProgress,
   Snackbar,
+  Avatar,
+  Typography,
+  Grid,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -41,7 +44,9 @@ import {
   Delete as DeleteIcon,
   Lock as LockIcon,
   LockOpen as LockOpenIcon,
+  Person as PersonIcon,
 } from '@mui/icons-material';
+import ImageUpload from '../common/ImageUpload';
 
 const UserManagement: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -210,7 +215,21 @@ const UserManagement: React.FC = () => {
             <TableBody>
               {users.map((user) => (
                 <TableRow key={user.id}>
-                  <TableCell>{user.firstName} {user.lastName}</TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Avatar 
+                        src={user.profile_picture ? `http://localhost:3000/uploads${user.profile_picture}` : undefined}
+                        sx={{ bgcolor: 'primary.light' }}
+                      >
+                        {!user.profile_picture && `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`}
+                      </Avatar>
+                      <Box>
+                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                          {user.firstName} {user.lastName}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </TableCell>
                   <TableCell>{user.username}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
@@ -306,6 +325,33 @@ const UserManagement: React.FC = () => {
               fullWidth
               required={!editingUser}
             />
+            <Grid item xs={12}>
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+                  Profile Picture
+                </Typography>
+                {editingUser && (
+                  <ImageUpload
+                    currentImage={editingUser.profile_picture}
+                    entityType="staff"
+                    entityId={editingUser.id}
+                    onImageUpdate={() => dispatch(fetchUsers())}
+                    size={120}
+                    variant="avatar"
+                  />
+                )}
+                {!editingUser && (
+                  <Avatar sx={{ width: 120, height: 120, mx: 'auto', bgcolor: 'primary.light' }}>
+                    <PersonIcon sx={{ fontSize: 60 }} />
+                  </Avatar>
+                )}
+                {!editingUser && (
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                    Profile picture can be added after creating the user
+                  </Typography>
+                )}
+              </Box>
+            </Grid>
           </Box>
         </DialogContent>
         <DialogActions>

@@ -10,6 +10,7 @@ export interface User {
   lastName: string;
   role: 'admin' | 'manager' | 'staff' | 'cashier';
   status: 'active' | 'inactive';
+  profile_picture?: string;
   createdAt: string;
   updatedAt: string;
 }

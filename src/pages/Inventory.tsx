@@ -34,6 +34,7 @@ import {
   Warning as WarningIcon,
   TrendingUp as TrendingUpIcon,
 } from '@mui/icons-material';
+import ImageUpload from '../components/common/ImageUpload';
 
 interface Product {
   id: string;
@@ -48,6 +49,7 @@ interface Product {
   quantity_in_stock: number;
   reorder_level: number;
   status: 'active' | 'inactive';
+  image_url?: string;
   created_at: string;
 }
 
@@ -280,13 +282,22 @@ const Inventory: React.FC = () => {
             {products.map((product) => (
               <TableRow key={product.id}>
                 <TableCell>
-                  <Box>
-                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                      {product.name}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {product.description}
-                    </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Avatar 
+                      src={product.image_url ? `http://localhost:3000/uploads${product.image_url}` : undefined}
+                      sx={{ bgcolor: 'primary.light', width: 56, height: 56 }}
+                      variant="rounded"
+                    >
+                      {!product.image_url && <InventoryIcon />}
+                    </Avatar>
+                    <Box>
+                      <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                        {product.name}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {product.description}
+                      </Typography>
+                    </Box>
                   </Box>
                 </TableCell>
                 
@@ -426,6 +437,43 @@ const Inventory: React.FC = () => {
                   <MenuItem value="inactive">Inactive</MenuItem>
                 </Select>
               </FormControl>
+            </Grid>
+            <Grid item xs={12}>
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+                  Product Image
+                </Typography>
+                {editingProduct && (
+                  <ImageUpload
+                    currentImage={editingProduct.image_url}
+                    entityType="products"
+                    entityId={editingProduct.id}
+                    onImageUpdate={fetchProducts}
+                    variant="rectangle"
+                  />
+                )}
+                {!editingProduct && (
+                  <Box
+                    sx={{
+                      width: '100%',
+                      height: 200,
+                      border: '2px dashed',
+                      borderColor: 'grey.300',
+                      borderRadius: 2,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: 'grey.50',
+                    }}
+                  >
+                    <InventoryIcon sx={{ fontSize: 48, color: 'grey.400', mb: 1 }} />
+                    <Typography variant="body2" color="text.secondary">
+                      Product image can be added after creation
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
             </Grid>
           </Grid>
         </DialogContent>

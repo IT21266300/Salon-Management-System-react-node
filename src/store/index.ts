@@ -4,6 +4,7 @@ import appointmentSlice from './appointmentSlice';
 import customerSlice from './customerSlice';
 import inventorySlice from './inventorySlice';
 import salesSlice from './salesSlice';
+import serviceSlice from './serviceSlice';
 import workstationSlice from './workstationSlice';
 import userSlice from './userSlice';
 
@@ -14,6 +15,7 @@ export const store = configureStore({
     customers: customerSlice,
     inventory: inventorySlice,
     sales: salesSlice,
+    services: serviceSlice,
     workstations: workstationSlice,
     users: userSlice,
   },

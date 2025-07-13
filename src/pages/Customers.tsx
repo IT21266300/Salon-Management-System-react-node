@@ -33,6 +33,7 @@ import {
   Email as EmailIcon,
   Phone as PhoneIcon,
 } from '@mui/icons-material';
+import ImageUpload from '../components/common/ImageUpload';
 
 interface Customer {
   id: string;
@@ -47,6 +48,7 @@ interface Customer {
   total_visits: number;
   total_spent: number;
   // last_visit: string;
+  profile_picture?: string;
   created_at: string;
 }
 
@@ -264,8 +266,11 @@ const Customers: React.FC = () => {
               <TableRow key={customer.id}>
                 <TableCell>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Avatar>
-                      {customer.first_name.charAt(0)}{customer.last_name.charAt(0)}
+                    <Avatar 
+                      src={customer.profile_picture ? `http://localhost:3000/uploads${customer.profile_picture}` : undefined}
+                      sx={{ bgcolor: 'primary.light' }}
+                    >
+                      {!customer.profile_picture && `${customer.first_name.charAt(0)}${customer.last_name.charAt(0)}`}
                     </Avatar>
                     <Box>
                       <Typography variant="body1" sx={{ fontWeight: 500 }}>
@@ -316,6 +321,35 @@ const Customers: React.FC = () => {
         </DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
+            {/* Profile Picture Upload */}
+            <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+                  Profile Picture
+                </Typography>
+                {editingCustomer && (
+                  <ImageUpload
+                    currentImage={editingCustomer.profile_picture}
+                    entityType="customers"
+                    entityId={editingCustomer.id}
+                    onImageUpdate={fetchCustomers}
+                    size={120}
+                    variant="avatar"
+                  />
+                )}
+                {!editingCustomer && (
+                  <Avatar sx={{ width: 120, height: 120, mx: 'auto', bgcolor: 'primary.light' }}>
+                    <PersonIcon sx={{ fontSize: 60 }} />
+                  </Avatar>
+                )}
+                {!editingCustomer && (
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                    Profile picture can be added after creating the customer
+                  </Typography>
+                )}
+              </Box>
+            </Grid>
+            
             <Grid item xs={12} md={6}>
               <TextField
                 label="First Name"
@@ -375,9 +409,13 @@ const Customers: React.FC = () => {
               <FormControl fullWidth>
                 <InputLabel>Gender</InputLabel>
                 <Select
-                  value={formData.gender}
-                  onChange={(e) => setFormData({ ...formData, gender: e.target.value as any })}
+                  value={formData.gender || ''}
+                  onChange={(e) => setFormData({ ...formData, gender: e.target.value as 'male' | 'female' | 'other' | '' })}
+                  displayEmpty
                 >
+                  <MenuItem value="">
+                    <em>Select Gender</em>
+                  </MenuItem>
                   <MenuItem value="male">Male</MenuItem>
                   <MenuItem value="female">Female</MenuItem>
                   <MenuItem value="other">Other</MenuItem>

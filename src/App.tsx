@@ -12,6 +12,7 @@ import Appointments from './pages/Appointments';
 import Customers from './pages/Customers';
 import Workstations from './pages/Workstations';
 import Suppliers from './pages/Suppliers';
+import Services from './pages/Services';
 import Inventory from './pages/Inventory';
 import Sales from './pages/Sales';
 import Reports from './pages/Reports';
@@ -67,6 +68,7 @@ function App() {
         <Route path="/customers" element={<Customers />} />
         <Route path="/workstations" element={<Workstations />} />
         <Route path="/suppliers" element={<Suppliers />} />
+        <Route path="/services" element={<Services />} />
         <Route path="/inventory" element={<Inventory />} />
         <Route path="/sales" element={<Sales />} />
         <Route path="/reports" element={<Reports />} />

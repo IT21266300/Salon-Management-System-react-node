@@ -20,6 +20,7 @@ import salesRoutes from './routes/sales.js';
 import reportRoutes from './routes/reports.js';
 import servicesRoutes from './routes/services.js';
 import workstationsRoutes from './routes/workstations.js';
+import imageRoutes from './routes/images.js';
 
 // Import middleware
 import errorHandler from './middleware/errorHandler.js';
@@ -64,6 +65,14 @@ app.use((req, res, next) => {
   next();
 });
 
+// Serve static files from the "uploads" directory with CORS headers
+app.use('/uploads', (req, res, next) => {
+  res.header('Access-Control-Allow-Origin', process.env.CLIENT_URL || 'http://localhost:5173');
+  res.header('Access-Control-Allow-Methods', 'GET');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  next();
+}, express.static(join(__dirname, '../../uploads')));
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -75,6 +84,7 @@ app.use('/api/sales', salesRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/services', servicesRoutes);
 app.use('/api/workstations', workstationsRoutes);
+app.use('/api/images', imageRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

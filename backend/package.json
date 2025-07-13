@@ -19,7 +19,9 @@
     "express-validator": "^7.0.1",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.1",
     "node-fetch": "^3.3.2",
+    "sharp": "^0.34.3",
     "uuid": "^9.0.1",
     "winston": "^3.11.0"
   },
