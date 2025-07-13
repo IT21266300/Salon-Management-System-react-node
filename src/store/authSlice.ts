@@ -17,12 +17,35 @@ interface AuthState {
   loading: boolean;
 }
 
-const initialState: AuthState = {
-  user: null,
-  token: localStorage.getItem('token'),
-  isAuthenticated: false, // Only true after validation
-  loading: false,
+const getInitialAuthState = (): AuthState => {
+  const token = localStorage.getItem('token');
+  const userJson = localStorage.getItem('user');
+  
+  if (token && userJson) {
+    try {
+      const user = JSON.parse(userJson);
+      return {
+        user,
+        token,
+        isAuthenticated: true, // Will be validated on app load
+        loading: false,
+      };
+    } catch (error) {
+      // Clear corrupted data
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    }
+  }
+  
+  return {
+    user: null,
+    token: null,
+    isAuthenticated: false,
+    loading: false,
+  };
 };
+
+const initialState: AuthState = getInitialAuthState();
 
 
 import { createAsyncThunk } from '@reduxjs/toolkit';
@@ -64,6 +87,7 @@ const authSlice = createSlice({
       state.token = action.payload.token;
       state.isAuthenticated = true;
       localStorage.setItem('token', action.payload.token);
+      localStorage.setItem('user', JSON.stringify(action.payload.user));
     },
     loginFailure: (state) => {
       state.loading = false;
@@ -76,6 +100,7 @@ const authSlice = createSlice({
       state.token = null;
       state.isAuthenticated = false;
       localStorage.removeItem('token');
+      localStorage.removeItem('user');
     },
   },
   extraReducers: (builder) => {
@@ -88,12 +113,15 @@ const authSlice = createSlice({
         state.user = action.payload.user;
         state.token = action.payload.token;
         state.isAuthenticated = true;
+        localStorage.setItem('user', JSON.stringify(action.payload.user));
       })
       .addCase(validateTokenAndLoadUser.rejected, (state) => {
         state.loading = false;
         state.user = null;
         state.token = null;
         state.isAuthenticated = false;
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
       });
   },
 });

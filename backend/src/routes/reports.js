@@ -7,9 +7,11 @@ router.get('/dashboard-stats', (req, res) => {
   try {
     const db = req.app.locals.db;
     
-    // Get today's sales
-    const todayStart = new Date().toISOString().split('T')[0] + ' 00:00:00';
-    const todayEnd = new Date().toISOString().split('T')[0] + ' 23:59:59';
+    // Get today's sales (using local date, not UTC)
+    const currentTime = new Date();
+    const localToday = new Date(currentTime.getTime() - (currentTime.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+    const todayStart = localToday + ' 00:00:00';
+    const todayEnd = localToday + ' 23:59:59';
     
     const dailySalesResult = db.prepare(`SELECT COALESCE(SUM(total), 0) as daily_total
                                         FROM sales
@@ -24,8 +26,9 @@ router.get('/dashboard-stats', (req, res) => {
     // Get customer count
     const customerCountResult = db.prepare('SELECT COUNT(*) as count FROM customers').get();
 
-    // Get today's appointments
-    const today = new Date().toISOString().split('T')[0];
+    // Get today's appointments (using local date, not UTC)
+    const now = new Date();
+    const today = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
     const todayAppointmentsResult = db.prepare('SELECT COUNT(*) as count FROM appointments WHERE date = ?').get(today);
 
     res.json({

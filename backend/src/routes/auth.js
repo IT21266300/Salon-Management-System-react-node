@@ -111,4 +111,42 @@ router.post('/register', [
   }
 });
 
+// Profile / Token validation route
+router.get('/profile', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+
+    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    
+    const db = req.app.locals.db;
+    const user = db.prepare('SELECT * FROM users WHERE id = ? AND status = ?').get(decoded.userId, 'active');
+    
+    if (!user) {
+      return res.status(401).json({ message: 'User not found' });
+    }
+
+    // Return user data (without password)
+    const userData = {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      firstName: user.first_name,
+      lastName: user.last_name,
+      role: user.role,
+    };
+
+    res.json({
+      success: true,
+      user: userData,
+    });
+  } catch (error) {
+    console.error('Profile error:', error);
+    res.status(401).json({ message: 'Invalid token' });
+  }
+});
+
 export default router;
