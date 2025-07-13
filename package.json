@@ -8,7 +8,7 @@
     "dev:frontend": "vite",
     "dev:backend": "cd backend && npm run dev",
     "build": "vite build",
-    "setup": "node scripts/setup.js",
+    "setup": "node scripts/setup.cjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },

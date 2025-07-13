@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { API_ENDPOINTS } from '../config/api';
 
 interface User {
   id: string;
@@ -33,7 +34,7 @@ export const validateTokenAndLoadUser = createAsyncThunk(
     const token = localStorage.getItem('token');
     if (!token) return rejectWithValue('No token');
     try {
-      const response = await fetch('http://localhost:3000/api/auth/profile', {
+      const response = await fetch(API_ENDPOINTS.PROFILE, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await response.json();

@@ -30,6 +30,7 @@ import {
   Email as EmailIcon,
   Phone as PhoneIcon,
 } from '@mui/icons-material';
+import { API_ENDPOINTS } from '../config/api';
 
 interface Supplier {
   id: string;
@@ -62,7 +63,7 @@ const Suppliers: React.FC = () => {
 
   const fetchSuppliers = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/suppliers');
+      const response = await fetch(API_ENDPOINTS.SUPPLIERS);
       const data = await response.json();
       if (data.success) {
         setSuppliers(data.suppliers);
@@ -103,10 +104,9 @@ const Suppliers: React.FC = () => {
   };
 
   const handleSaveSupplier = async () => {
-    try {
-      const url = editingSupplier 
-        ? `http://localhost:3001/api/suppliers/${editingSupplier.id}`
-        : 'http://localhost:3001/api/suppliers';
+    try {      const url = editingSupplier
+        ? `${API_ENDPOINTS.SUPPLIERS}/${editingSupplier.id}`
+        : API_ENDPOINTS.SUPPLIERS;
       
       const method = editingSupplier ? 'PUT' : 'POST';
 

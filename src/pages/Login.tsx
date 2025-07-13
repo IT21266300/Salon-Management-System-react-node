@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import { Spa as SpaIcon } from '@mui/icons-material';
 import { loginStart, loginSuccess, loginFailure } from '../store/authSlice';
+import { API_ENDPOINTS } from '../config/api';
 
 const Login: React.FC = () => {
   const dispatch = useDispatch();
@@ -37,7 +38,7 @@ const Login: React.FC = () => {
     dispatch(loginStart());
 
     try {
-      const response = await fetch('http://localhost:3000/api/auth/login', {
+      const response = await fetch(API_ENDPOINTS.LOGIN, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
