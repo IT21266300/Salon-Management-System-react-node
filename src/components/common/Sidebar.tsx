@@ -27,23 +27,27 @@ import {
   Spa as SpaIcon,
   WorkspacePremium as WorkstationsIcon,
   RoomService as ServicesIcon,
+
   Settings as SettingsIcon,
   Notifications as NotificationsIcon,
   KeyboardArrowRight as ArrowIcon,
+
 } from '@mui/icons-material';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 
 const menuItems = [
-  { path: '/dashboard', label: 'Dashboard', icon: <DashboardIcon />, badge: null },
-  { path: '/appointments', label: 'Appointments', icon: <EventIcon />, badge: '12' },
-  { path: '/customers', label: 'Customers', icon: <PersonIcon />, badge: null },
-  { path: '/services', label: 'Services', icon: <ServicesIcon />, badge: null },
-  { path: '/workstations', label: 'Workstations', icon: <WorkstationsIcon />, badge: null },
-  { path: '/suppliers', label: 'Suppliers', icon: <SupplierIcon />, badge: null },
-  { path: '/inventory', label: 'Inventory', icon: <InventoryIcon />, badge: '3' },
-  { path: '/sales', label: 'Sales', icon: <SalesIcon />, badge: null },
-  { path: '/reports', label: 'Reports', icon: <ReportsIcon />, badge: null },
+
+  { path: '/dashboard', label: 'Dashboard', icon: <DashboardIcon /> },
+  { path: '/appointments', label: 'Appointments', icon: <EventIcon /> },
+  { path: '/customers', label: 'Customers', icon: <PersonIcon /> },
+  { path: '/services', label: 'Services', icon: <ServicesIcon /> },
+  { path: '/workstations', label: 'Workstations', icon: <WorkstationsIcon /> },
+  { path: '/suppliers', label: 'Suppliers', icon: <SupplierIcon /> },
+  { path: '/inventory', label: 'Inventory', icon: <InventoryIcon /> },
+  { path: '/sales', label: 'Sales', icon: <SalesIcon /> },
+  { path: '/reports', label: 'Reports', icon: <ReportsIcon /> },
+
 ];
 
 const adminItems = [

@@ -10,6 +10,7 @@ import Dashboard from './pages/Dashboard';
 import Administration from './pages/Administration';
 import Appointments from './pages/Appointments';
 import Customers from './pages/Customers';
+import Services from './pages/Services';
 import Workstations from './pages/Workstations';
 import Suppliers from './pages/Suppliers';
 import Inventory from './pages/Inventory';
@@ -17,6 +18,9 @@ import Sales from './pages/Sales';
 import Reports from './pages/Reports';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import Profile from './pages/Profile';
+import { NotificationProvider } from './contexts/NotificationContext';
+import ErrorBoundary from './components/common/ErrorBoundary';
+import Loading from './components/common/Loading';
 
 
 function App() {
@@ -40,39 +44,44 @@ function App() {
         height: '100vh',
         fontSize: '18px' 
       }}>
-        Loading...
+        <Loading variant="page" />
       </div>
     );
   }
 
-  // Show login page if not authenticated
-  if (!isAuthenticated) {
-    return <Login />;
-  }
-
   return (
-    <Layout>
-      <Routes>
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route 
-          path="/administration" 
-          element={
-            <ProtectedRoute requiredRole="admin">
-              <Administration />
-            </ProtectedRoute>
-          } 
-        />
-        <Route path="/appointments" element={<Appointments />} />
-        <Route path="/customers" element={<Customers />} />
-        <Route path="/workstations" element={<Workstations />} />
-        <Route path="/suppliers" element={<Suppliers />} />
-        <Route path="/inventory" element={<Inventory />} />
-        <Route path="/sales" element={<Sales />} />
-        <Route path="/reports" element={<Reports />} />
-        <Route path="/profile" element={<Profile />} />
-      </Routes>
-    </Layout>
+    <ErrorBoundary>
+      <NotificationProvider>
+        {/* Show login page if not authenticated */}
+        {!isAuthenticated ? (
+          <Login />
+        ) : (
+          <Layout>
+            <Routes>
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route 
+                path="/administration" 
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <Administration />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route path="/appointments" element={<Appointments />} />
+              <Route path="/customers" element={<Customers />} />
+              <Route path="/services" element={<Services />} />
+              <Route path="/workstations" element={<Workstations />} />
+              <Route path="/suppliers" element={<Suppliers />} />
+              <Route path="/inventory" element={<Inventory />} />
+              <Route path="/sales" element={<Sales />} />
+              <Route path="/reports" element={<Reports />} />
+              <Route path="/profile" element={<Profile />} />
+            </Routes>
+          </Layout>
+        )}
+      </NotificationProvider>
+    </ErrorBoundary>
   );
 }
 
