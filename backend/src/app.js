@@ -20,6 +20,7 @@ import salesRoutes from './routes/sales.js';
 import reportRoutes from './routes/reports.js';
 import servicesRoutes from './routes/services.js';
 import workstationsRoutes from './routes/workstations.js';
+import activityLogsRoutes from './routes/activity-logs.js';
 
 // Import middleware
 import errorHandler from './middleware/errorHandler.js';
@@ -75,6 +76,7 @@ app.use('/api/sales', salesRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/services', servicesRoutes);
 app.use('/api/workstations', workstationsRoutes);
+app.use('/api/activity-logs', activityLogsRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

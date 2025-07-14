@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Table,
@@ -15,52 +15,32 @@ import {
   Select,
   MenuItem,
   Typography,
+  CircularProgress,
+  Alert,
+  Pagination,
 } from '@mui/material';
 
 interface ActivityLog {
   id: string;
-  user: string;
+  username: string;
   action: string;
   module: string;
   details: string;
-  timestamp: string;
-  ipAddress: string;
+  created_at: string;
+  ip_address: string;
   status: 'success' | 'warning' | 'error';
 }
 
 const ActivityLogs: React.FC = () => {
-  const [logs] = useState<ActivityLog[]>([
-    {
-      id: '1',
-      user: 'Admin User',
-      action: 'User Login',
-      module: 'Authentication',
-      details: 'Successful login',
-      timestamp: '2024-01-15 09:30:15',
-      ipAddress: '192.168.1.100',
-      status: 'success',
-    },
-    {
-      id: '2',
-      user: 'Jane Smith',
-      action: 'Create Appointment',
-      module: 'Appointments',
-      details: 'Created appointment for John Doe',
-      timestamp: '2024-01-15 10:15:30',
-      ipAddress: '192.168.1.101',
-      status: 'success',
-    },
-    {
-      id: '3',
-      user: 'Admin User',
-      action: 'Update Product',
-      module: 'Inventory',
-      details: 'Updated stock for Shampoo XYZ',
-      timestamp: '2024-01-15 11:45:22',
-      ipAddress: '192.168.1.100',
-      status: 'success',
-    },
-  ]);
+  const [logs, setLogs] = useState<ActivityLog[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 20,
+    total: 0,
+    pages: 0
+  });
 
   const [filter, setFilter] = useState({
     user: '',
@@ -68,7 +48,49 @@ const ActivityLogs: React.FC = () => {
     status: '',
   });
 
-  const getStatusColor = (status: string) => {
+  const fetchActivityLogs = useCallback(async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams({
+        page: pagination.page.toString(),
+        limit: pagination.limit.toString(),
+        ...(filter.user && { user: filter.user }),
+        ...(filter.module && filter.module !== '' && { module: filter.module }),
+        ...(filter.status && filter.status !== '' && { status: filter.status }),
+      });
+
+      const response = await fetch(`http://localhost:3001/api/activity-logs?${params}`);
+      const data = await response.json();
+
+      if (data.success) {
+        setLogs(data.logs);
+        setPagination(data.pagination);
+        setError(null);
+      } else {
+        setError('Failed to fetch activity logs');
+      }
+    } catch (err) {
+      setError('Error connecting to server');
+      console.error('Fetch activity logs error:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [pagination.page, pagination.limit, filter]);
+
+  useEffect(() => {
+    fetchActivityLogs();
+  }, [fetchActivityLogs]);
+
+  const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
+    setPagination(prev => ({ ...prev, page: value }));
+  };
+
+  const handleFilterChange = (newFilter: Partial<typeof filter>) => {
+    setFilter(prev => ({ ...prev, ...newFilter }));
+    setPagination(prev => ({ ...prev, page: 1 }));
+  };
+
+  const getStatusColor = (status: string): 'success' | 'warning' | 'error' | 'default' => {
     switch (status) {
       case 'success': return 'success';
       case 'warning': return 'warning';
@@ -77,13 +99,13 @@ const ActivityLogs: React.FC = () => {
     }
   };
 
-  const filteredLogs = logs.filter(log => {
+  if (loading) {
     return (
-      (filter.user === '' || log.user.toLowerCase().includes(filter.user.toLowerCase())) &&
-      (filter.module === '' || log.module === filter.module) &&
-      (filter.status === '' || log.status === filter.status)
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+        <CircularProgress />
+      </Box>
     );
-  });
+  }
 
   return (
     <Box>
@@ -91,12 +113,18 @@ const ActivityLogs: React.FC = () => {
         System Activity Logs
       </Typography>
 
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
+
       {/* Filters */}
       <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
         <TextField
           label="Search User"
           value={filter.user}
-          onChange={(e) => setFilter({ ...filter, user: e.target.value })}
+          onChange={(e) => handleFilterChange({ user: e.target.value })}
           size="small"
           sx={{ minWidth: 200 }}
         />
@@ -104,21 +132,24 @@ const ActivityLogs: React.FC = () => {
           <InputLabel>Module</InputLabel>
           <Select
             value={filter.module}
-            onChange={(e) => setFilter({ ...filter, module: e.target.value })}
+            onChange={(e) => handleFilterChange({ module: e.target.value })}
           >
             <MenuItem value="">All Modules</MenuItem>
             <MenuItem value="Authentication">Authentication</MenuItem>
             <MenuItem value="Appointments">Appointments</MenuItem>
             <MenuItem value="Customers">Customers</MenuItem>
             <MenuItem value="Inventory">Inventory</MenuItem>
+            <MenuItem value="Services">Services</MenuItem>
             <MenuItem value="Sales">Sales</MenuItem>
+            <MenuItem value="Users">Users</MenuItem>
+            <MenuItem value="Reports">Reports</MenuItem>
           </Select>
         </FormControl>
         <FormControl size="small" sx={{ minWidth: 120 }}>
           <InputLabel>Status</InputLabel>
           <Select
             value={filter.status}
-            onChange={(e) => setFilter({ ...filter, status: e.target.value })}
+            onChange={(e) => handleFilterChange({ status: e.target.value })}
           >
             <MenuItem value="">All Status</MenuItem>
             <MenuItem value="success">Success</MenuItem>
@@ -142,18 +173,18 @@ const ActivityLogs: React.FC = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredLogs.map((log) => (
+            {logs.map((log) => (
               <TableRow key={log.id}>
-                <TableCell>{log.timestamp}</TableCell>
-                <TableCell>{log.user}</TableCell>
+                <TableCell>{new Date(log.created_at).toLocaleString()}</TableCell>
+                <TableCell>{log.username}</TableCell>
                 <TableCell>{log.module}</TableCell>
                 <TableCell>{log.action}</TableCell>
                 <TableCell>{log.details}</TableCell>
-                <TableCell>{log.ipAddress}</TableCell>
+                <TableCell>{log.ip_address}</TableCell>
                 <TableCell>
                   <Chip
                     label={log.status}
-                    color={getStatusColor(log.status) as any}
+                    color={getStatusColor(log.status)}
                     size="small"
                   />
                 </TableCell>
@@ -162,6 +193,16 @@ const ActivityLogs: React.FC = () => {
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Pagination */}
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+        <Pagination
+          count={pagination.pages}
+          page={pagination.page}
+          onChange={handlePageChange}
+          color="primary"
+        />
+      </Box>
     </Box>
   );
 };

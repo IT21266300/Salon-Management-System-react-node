@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import { body, validationResult } from 'express-validator';
+import { logActivity } from './activity-logs.js';
 
 const router = express.Router();
 
@@ -24,12 +25,33 @@ router.post('/login', [
     const user = db.prepare('SELECT * FROM users WHERE username = ? AND status = ?').get(username, 'active');
     
     if (!user) {
+      // Log failed login attempt
+      logActivity(db, {
+        username: username,
+        action: 'Failed Login',
+        module: 'Authentication',
+        details: 'Invalid username',
+        ip_address: req.ip || req.connection.remoteAddress || 'unknown',
+        user_agent: req.get('User-Agent') || 'unknown',
+        status: 'error'
+      });
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     // Check password
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
     if (!isPasswordValid) {
+      // Log failed login attempt
+      logActivity(db, {
+        user_id: user.id,
+        username: user.username,
+        action: 'Failed Login',
+        module: 'Authentication',
+        details: 'Invalid password',
+        ip_address: req.ip || req.connection.remoteAddress || 'unknown',
+        user_agent: req.get('User-Agent') || 'unknown',
+        status: 'error'
+      });
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
@@ -53,6 +75,18 @@ router.post('/login', [
       lastName: user.last_name,
       role: user.role,
     };
+
+    // Log successful login
+    logActivity(db, {
+      user_id: user.id,
+      username: user.username,
+      action: 'User Login',
+      module: 'Authentication',
+      details: 'Successful login',
+      ip_address: req.ip || req.connection.remoteAddress || 'unknown',
+      user_agent: req.get('User-Agent') || 'unknown',
+      status: 'success'
+    });
 
     res.json({
       success: true,
@@ -99,6 +133,18 @@ router.post('/register', [
     const insertUser = db.prepare(`INSERT INTO users (id, username, email, password_hash, first_name, last_name, role)
           VALUES (?, ?, ?, ?, ?, ?, ?)`);
     insertUser.run(userId, username, email, passwordHash, firstName, lastName, role);
+
+    // Log user creation
+    logActivity(db, {
+      user_id: userId,
+      username: username,
+      action: 'User Registration',
+      module: 'Authentication',
+      details: `New user registered with role: ${role}`,
+      ip_address: req.ip || req.connection.remoteAddress || 'unknown',
+      user_agent: req.get('User-Agent') || 'unknown',
+      status: 'success'
+    });
 
     res.status(201).json({
       success: true,

@@ -1,6 +1,7 @@
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { body, validationResult } from 'express-validator';
+import { logActivity } from './activity-logs.js';
 
 const router = express.Router();
 
@@ -46,6 +47,21 @@ router.post('/', (req, res) => {
     db.prepare(`INSERT INTO appointments (id, customer_id, service_id, workstation_id, staff_id, date, time, duration, total_amount, notes)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
       .run(appointmentId, customerId, serviceId, workstationId, staffId, date, time, duration, totalAmount, notes);
+
+    // Get customer and service names for logging
+    const customer = db.prepare('SELECT first_name, last_name FROM customers WHERE id = ?').get(customerId);
+    const service = db.prepare('SELECT name FROM services WHERE id = ?').get(serviceId);
+    
+    // Log appointment creation
+    logActivity(db, {
+      username: 'System User', // TODO: Get from JWT token
+      action: 'Create Appointment',
+      module: 'Appointments',
+      details: `Created appointment for ${customer?.first_name} ${customer?.last_name} - ${service?.name} on ${date} at ${time}`,
+      ip_address: req.ip || req.connection.remoteAddress || 'unknown',
+      user_agent: req.get('User-Agent') || 'unknown',
+      status: 'success'
+    });
 
     res.status(201).json({
       success: true,
