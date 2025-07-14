@@ -13,12 +13,10 @@ import {
   Divider,
   ListItemIcon,
   ListItemText,
-  Paper,
   Fade,
 } from '@mui/material';
 import {
   Notifications as NotificationsIcon,
-  AccountCircle as AccountIcon,
   Logout as LogoutIcon,
   Settings as SettingsIcon,
   Person as PersonIcon,
@@ -36,7 +34,7 @@ const Header: React.FC = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector((state: RootState) => state.auth);
-  const { lowStockAlerts } = useSelector((state: RootState) => state.inventory);
+  const { lowStockAlerts = [] } = useSelector((state: RootState) => state.inventory);
   
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [notificationAnchor, setNotificationAnchor] = React.useState<null | HTMLElement>(null);
@@ -64,7 +62,8 @@ const Header: React.FC = () => {
 
   const handleSettings = () => {
     handleClose();
-    navigate('/settings');
+    // Navigate to profile since settings page doesn't exist yet
+    navigate('/profile');
   };
 
   const handleLogout = () => {
@@ -216,18 +215,18 @@ const Header: React.FC = () => {
             onClick={handleNotificationMenu}
             sx={{ 
               color: 'text.secondary',
-              bgcolor: lowStockAlerts.length > 0 ? 'rgba(231, 76, 60, 0.05)' : 'rgba(139, 69, 19, 0.05)',
-              border: `1px solid ${lowStockAlerts.length > 0 ? 'rgba(231, 76, 60, 0.1)' : 'rgba(139, 69, 19, 0.1)'}`,
+              bgcolor: (lowStockAlerts?.length || 0) > 0 ? 'rgba(231, 76, 60, 0.05)' : 'rgba(139, 69, 19, 0.05)',
+              border: `1px solid ${(lowStockAlerts?.length || 0) > 0 ? 'rgba(231, 76, 60, 0.1)' : 'rgba(139, 69, 19, 0.1)'}`,
               '&:hover': { 
-                bgcolor: lowStockAlerts.length > 0 ? 'rgba(231, 76, 60, 0.1)' : 'rgba(139, 69, 19, 0.1)',
-                color: lowStockAlerts.length > 0 ? '#E74C3C' : '#8B4513',
+                bgcolor: (lowStockAlerts?.length || 0) > 0 ? 'rgba(231, 76, 60, 0.1)' : 'rgba(139, 69, 19, 0.1)',
+                color: (lowStockAlerts?.length || 0) > 0 ? '#E74C3C' : '#8B4513',
                 transform: 'scale(1.05)',
               },
               transition: 'all 0.2s ease-in-out',
             }}
           >
             <Badge 
-              badgeContent={lowStockAlerts.length} 
+              badgeContent={lowStockAlerts?.length || 0} 
               color="error"
               sx={{
                 '& .MuiBadge-badge': {
@@ -343,12 +342,12 @@ const Header: React.FC = () => {
               Notifications
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {lowStockAlerts.length} new alerts
+              {lowStockAlerts?.length || 0} new alerts
             </Typography>
           </Box>
           <Divider />
           
-          {lowStockAlerts.length > 0 ? (
+          {(lowStockAlerts?.length || 0) > 0 ? (
             lowStockAlerts.slice(0, 5).map((alert, index) => (
               <MenuItem key={index} onClick={handleNotificationClose}>
                 <ListItemIcon>
@@ -371,12 +370,12 @@ const Header: React.FC = () => {
             </MenuItem>
           )}
           
-          {lowStockAlerts.length > 5 && (
+          {(lowStockAlerts?.length || 0) > 5 && (
             <>
               <Divider />
               <MenuItem onClick={handleNotificationClose}>
                 <ListItemText
-                  primary={`View all ${lowStockAlerts.length} notifications`}
+                  primary={`View all ${lowStockAlerts?.length || 0} notifications`}
                   primaryTypographyProps={{ 
                     fontSize: '0.875rem', 
                     fontWeight: 600,
