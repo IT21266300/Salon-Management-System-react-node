@@ -58,6 +58,8 @@ import {
   CheckCircle as ActiveIcon,
   Cancel as InactiveIcon,
 } from '@mui/icons-material';
+import { DatePicker } from '@mui/x-date-pickers';
+import dayjs from 'dayjs';
 import { API_ENDPOINTS } from '../config/api';
 
 interface Service {
@@ -222,6 +224,13 @@ const Services: React.FC = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [tabValue, setTabValue] = useState(0);
+  const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false);
+  const [advancedFilters, setAdvancedFilters] = useState({
+    priceRange: { min: '', max: '' },
+    durationRange: { min: '', max: '' },
+    createdDateRange: { start: null as any, end: null as any },
+    bookingCountRange: { min: '', max: '' },
+  });
   
   const [filters, setFilters] = useState({
     status: 'all',
@@ -521,20 +530,60 @@ const Services: React.FC = () => {
     return colors[category as keyof typeof colors] || '#607D8B';
   };
 
+  // Check if any filters are active
+  const hasActiveFilters = Boolean(
+    filters.category !== 'all' ||
+    filters.status !== 'all' ||
+    advancedFilters.priceRange.min ||
+    advancedFilters.priceRange.max ||
+    advancedFilters.durationRange.min ||
+    advancedFilters.durationRange.max ||
+    advancedFilters.createdDateRange.start ||
+    advancedFilters.createdDateRange.end ||
+    advancedFilters.bookingCountRange.min ||
+    advancedFilters.bookingCountRange.max
+  );
+
   // Filter services based on search and tab
   const filteredServices = services.filter(service => {
     const matchesSearch = service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          service.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          service.description.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesSearch;
+    
+    // Apply category filter
+    const matchesCategory = filters.category === 'all' || service.category === filters.category;
+    
+    // Apply status filter
+    const matchesStatus = filters.status === 'all' || service.status === filters.status;
+    
+    // Advanced filters
+    const matchesPriceRange = 
+      (!advancedFilters.priceRange.min || service.price >= parseFloat(advancedFilters.priceRange.min)) &&
+      (!advancedFilters.priceRange.max || service.price <= parseFloat(advancedFilters.priceRange.max));
+    
+    const matchesDurationRange = 
+      (!advancedFilters.durationRange.min || service.duration >= parseInt(advancedFilters.durationRange.min)) &&
+      (!advancedFilters.durationRange.max || service.duration <= parseInt(advancedFilters.durationRange.max));
+    
+    const matchesCreatedDateRange = 
+      (!advancedFilters.createdDateRange.start || !advancedFilters.createdDateRange.end) ||
+      (dayjs(service.created_at).isAfter(dayjs(advancedFilters.createdDateRange.start).subtract(1, 'day')) &&
+       dayjs(service.created_at).isBefore(dayjs(advancedFilters.createdDateRange.end).add(1, 'day')));
+    
+    const matchesBookingCountRange = 
+      (!advancedFilters.bookingCountRange.min || (service.appointment_count || 0) >= parseInt(advancedFilters.bookingCountRange.min)) &&
+      (!advancedFilters.bookingCountRange.max || (service.appointment_count || 0) <= parseInt(advancedFilters.bookingCountRange.max));
+    
+    return matchesSearch && matchesCategory && matchesStatus && matchesPriceRange && 
+           matchesDurationRange && matchesCreatedDateRange && matchesBookingCountRange;
   });
 
   // Get services by tab
   const getServicesByTab = () => {
     switch (tabValue) {
-      case 0: return filteredServices; // All services
-      case 1: return filteredServices.filter(s => s.status === 'active'); // Active services
-      case 2: return filteredServices.filter(s => s.status === 'inactive'); // Inactive services
+      case 0: return filteredServices; // All services (respects all filters)
+      case 1: return filteredServices.filter(s => s.status === 'active'); // Active services (additional tab filter)
+      case 2: return filteredServices.filter(s => s.status === 'inactive'); // Inactive services (additional tab filter)
       case 3: return filteredServices.filter(s => (s.appointment_count || 0) >= 50); // Popular services (50+ bookings)
       default: return filteredServices;
     }
@@ -673,7 +722,7 @@ const Services: React.FC = () => {
         }}
       >
         <Grid container spacing={3} alignItems="center">
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={4}>
             <TextField
               fullWidth
               placeholder="Search services..."
@@ -694,7 +743,7 @@ const Services: React.FC = () => {
               }}
             />
           </Grid>
-          <Grid item xs={12} md={3}>
+          <Grid item xs={12} md={2.5}>
             <FormControl fullWidth>
               <InputLabel>Category Filter</InputLabel>
               <Select
@@ -715,24 +764,92 @@ const Services: React.FC = () => {
               </Select>
             </FormControl>
           </Grid>
+          <Grid item xs={12} md={2.5}>
+            <FormControl fullWidth>
+              <InputLabel>Status Filter</InputLabel>
+              <Select
+                value={filters.status}
+                label="Status Filter"
+                onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                sx={{
+                  borderRadius: 2,
+                  backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                }}
+              >
+                <MenuItem value="all">All Status</MenuItem>
+                <MenuItem value="active">Active</MenuItem>
+                <MenuItem value="inactive">Inactive</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
           <Grid item xs={12} md={3}>
-            <Button
-              variant="outlined"
-              startIcon={<FilterIcon />}
-              fullWidth
-              sx={{
-                py: 1.5,
-                borderRadius: 2,
-                borderColor: '#8B4513',
-                color: '#8B4513',
-                '&:hover': {
+            {hasActiveFilters ? (
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => {
+                    setFilters({ status: 'all', category: 'all' });
+                    setAdvancedFilters({
+                      priceRange: { min: '', max: '' },
+                      durationRange: { min: '', max: '' },
+                      createdDateRange: { start: null, end: null },
+                      bookingCountRange: { min: '', max: '' },
+                    });
+                  }}
+                  size="small"
+                  sx={{
+                    minWidth: 'auto',
+                    px: 2,
+                    py: 1.5,
+                    borderRadius: 2,
+                    borderColor: '#E74C3C',
+                    color: '#E74C3C',
+                    '&:hover': {
+                      borderColor: '#E74C3C',
+                      backgroundColor: 'rgba(231, 76, 60, 0.04)',
+                    }
+                  }}
+                >
+                  Clear
+                </Button>
+                <Button
+                  variant="contained"
+                  startIcon={<FilterIcon />}
+                  onClick={() => setAdvancedFiltersOpen(true)}
+                  sx={{
+                    flex: 1,
+                    py: 1.5,
+                    borderRadius: 2,
+                    background: 'linear-gradient(135deg, #8B4513 0%, #A0522D 100%)',
+                    color: 'white',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #A0522D 0%, #8B4513 100%)',
+                    }
+                  }}
+                >
+                  Filters (Active)
+                </Button>
+              </Box>
+            ) : (
+              <Button
+                variant="outlined"
+                startIcon={<FilterIcon />}
+                fullWidth
+                onClick={() => setAdvancedFiltersOpen(true)}
+                sx={{
+                  py: 1.5,
+                  borderRadius: 2,
                   borderColor: '#8B4513',
-                  backgroundColor: 'rgba(139, 69, 19, 0.04)',
-                }
-              }}
-            >
-              Advanced Filters
-            </Button>
+                  color: '#8B4513',
+                  '&:hover': {
+                    borderColor: '#8B4513',
+                    backgroundColor: 'rgba(139, 69, 19, 0.04)',
+                  }
+                }}
+              >
+                Advanced Filters
+              </Button>
+            )}
           </Grid>
         </Grid>
       </Paper>
@@ -1564,6 +1681,289 @@ const Services: React.FC = () => {
               Edit Service
             </Button>
           )}
+        </DialogActions>
+      </Dialog>
+
+      {/* Advanced Filters Dialog */}
+      <Dialog
+        open={advancedFiltersOpen}
+        onClose={() => setAdvancedFiltersOpen(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,246,240,0.95) 100%)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(139, 69, 19, 0.08)',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+          }
+        }}
+      >
+        <DialogTitle
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            pb: 2,
+            borderBottom: '1px solid rgba(139, 69, 19, 0.08)',
+            background: 'linear-gradient(135deg, rgba(139, 69, 19, 0.03) 0%, rgba(212, 175, 55, 0.03) 100%)',
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Avatar
+              sx={{
+                width: 48,
+                height: 48,
+                background: 'linear-gradient(135deg, #8B4513 0%, #A0522D 100%)',
+              }}
+            >
+              <FilterIcon />
+            </Avatar>
+            <Box>
+              <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                Advanced Filters
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Filter services by specific criteria
+              </Typography>
+            </Box>
+          </Box>
+          <IconButton
+            onClick={() => setAdvancedFiltersOpen(false)}
+            sx={{
+              color: 'text.secondary',
+              '&:hover': {
+                backgroundColor: 'rgba(139, 69, 19, 0.1)',
+                color: '#8B4513',
+              }
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent sx={{ p: 4 }}>
+          <Grid container spacing={3}>
+            {/* Price Range */}
+            <Grid item xs={12}>
+              <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: '#8B4513' }}>
+                Price Range
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Minimum Price"
+                type="number"
+                value={advancedFilters.priceRange.min}
+                onChange={(e) => setAdvancedFilters({
+                  ...advancedFilters,
+                  priceRange: { ...advancedFilters.priceRange, min: e.target.value }
+                })}
+                fullWidth
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Maximum Price"
+                type="number"
+                value={advancedFilters.priceRange.max}
+                onChange={(e) => setAdvancedFilters({
+                  ...advancedFilters,
+                  priceRange: { ...advancedFilters.priceRange, max: e.target.value }
+                })}
+                fullWidth
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+              />
+            </Grid>
+
+            {/* Duration Range */}
+            <Grid item xs={12}>
+              <Typography variant="h6" sx={{ mb: 2, mt: 2, fontWeight: 600, color: '#8B4513' }}>
+                Duration Range
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Minimum Duration"
+                type="number"
+                value={advancedFilters.durationRange.min}
+                onChange={(e) => setAdvancedFilters({
+                  ...advancedFilters,
+                  durationRange: { ...advancedFilters.durationRange, min: e.target.value }
+                })}
+                fullWidth
+                InputProps={{
+                  endAdornment: <InputAdornment position="end">min</InputAdornment>,
+                }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Maximum Duration"
+                type="number"
+                value={advancedFilters.durationRange.max}
+                onChange={(e) => setAdvancedFilters({
+                  ...advancedFilters,
+                  durationRange: { ...advancedFilters.durationRange, max: e.target.value }
+                })}
+                fullWidth
+                InputProps={{
+                  endAdornment: <InputAdornment position="end">min</InputAdornment>,
+                }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+              />
+            </Grid>
+
+            {/* Created Date Range */}
+            <Grid item xs={12}>
+              <Typography variant="h6" sx={{ mb: 2, mt: 2, fontWeight: 600, color: '#8B4513' }}>
+                Created Date Range
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <DatePicker
+                label="Start Date"
+                value={advancedFilters.createdDateRange.start}
+                onChange={(newValue) => setAdvancedFilters({
+                  ...advancedFilters,
+                  createdDateRange: { ...advancedFilters.createdDateRange, start: newValue }
+                })}
+                slotProps={{ 
+                  textField: { 
+                    fullWidth: true,
+                    sx: { '& .MuiOutlinedInput-root': { borderRadius: 2 } }
+                  } 
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <DatePicker
+                label="End Date"
+                value={advancedFilters.createdDateRange.end}
+                onChange={(newValue) => setAdvancedFilters({
+                  ...advancedFilters,
+                  createdDateRange: { ...advancedFilters.createdDateRange, end: newValue }
+                })}
+                slotProps={{ 
+                  textField: { 
+                    fullWidth: true,
+                    sx: { '& .MuiOutlinedInput-root': { borderRadius: 2 } }
+                  } 
+                }}
+              />
+            </Grid>
+
+            {/* Booking Count Range */}
+            <Grid item xs={12}>
+              <Typography variant="h6" sx={{ mb: 2, mt: 2, fontWeight: 600, color: '#8B4513' }}>
+                Booking Count Range
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Minimum Bookings"
+                type="number"
+                value={advancedFilters.bookingCountRange.min}
+                onChange={(e) => setAdvancedFilters({
+                  ...advancedFilters,
+                  bookingCountRange: { ...advancedFilters.bookingCountRange, min: e.target.value }
+                })}
+                fullWidth
+                InputProps={{
+                  endAdornment: <InputAdornment position="end">bookings</InputAdornment>,
+                }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Maximum Bookings"
+                type="number"
+                value={advancedFilters.bookingCountRange.max}
+                onChange={(e) => setAdvancedFilters({
+                  ...advancedFilters,
+                  bookingCountRange: { ...advancedFilters.bookingCountRange, max: e.target.value }
+                })}
+                fullWidth
+                InputProps={{
+                  endAdornment: <InputAdornment position="end">bookings</InputAdornment>,
+                }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+
+        <DialogActions 
+          sx={{ 
+            p: 3, 
+            borderTop: '1px solid rgba(139, 69, 19, 0.08)',
+            background: 'linear-gradient(135deg, rgba(139, 69, 19, 0.02) 0%, rgba(212, 175, 55, 0.02) 100%)',
+          }}
+        >
+          <Button 
+            onClick={() => {
+              setAdvancedFilters({
+                priceRange: { min: '', max: '' },
+                durationRange: { min: '', max: '' },
+                createdDateRange: { start: null, end: null },
+                bookingCountRange: { min: '', max: '' },
+              });
+            }}
+            sx={{ 
+              color: 'text.secondary',
+              px: 3,
+              py: 1,
+              borderRadius: 2,
+              '&:hover': {
+                backgroundColor: 'rgba(139, 69, 19, 0.05)',
+              }
+            }}
+          >
+            Clear All
+          </Button>
+          <Button 
+            onClick={() => setAdvancedFiltersOpen(false)}
+            sx={{ 
+              color: 'text.secondary',
+              px: 3,
+              py: 1,
+              borderRadius: 2,
+              '&:hover': {
+                backgroundColor: 'rgba(139, 69, 19, 0.05)',
+              }
+            }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={() => setAdvancedFiltersOpen(false)}
+            variant="contained"
+            sx={{
+              background: 'linear-gradient(135deg, #8B4513 0%, #A0522D 100%)',
+              px: 4,
+              py: 1,
+              borderRadius: 2,
+              fontWeight: 600,
+              '&:hover': {
+                background: 'linear-gradient(135deg, #A0522D 0%, #8B4513 100%)',
+                transform: 'translateY(-1px)',
+                boxShadow: '0 6px 20px rgba(139, 69, 19, 0.3)',
+              },
+              transition: 'all 0.3s ease',
+            }}
+          >
+            Apply Filters
+          </Button>
         </DialogActions>
       </Dialog>
 
