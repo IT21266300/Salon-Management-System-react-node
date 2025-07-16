@@ -388,8 +388,19 @@ const workstationSlice = createSlice({
       .addCase(assignStaffToWorkstation.pending, (state) => {
         state.loading = true;
       })
-      .addCase(assignStaffToWorkstation.fulfilled, (state) => {
+      .addCase(assignStaffToWorkstation.fulfilled, (state, action) => {
         state.loading = false;
+        // Update the workstation in the workstations array
+        const { workstationId, staffId } = action.meta.arg;
+        const workstationIndex = state.workstations.findIndex(ws => ws.id === workstationId);
+        if (workstationIndex !== -1) {
+          state.workstations[workstationIndex].assigned_staff_id = staffId;
+          // Find staff name from available staff
+          const staff = state.availableStaff.find(s => s.id === staffId);
+          if (staff) {
+            state.workstations[workstationIndex].assigned_staff_name = `${staff.first_name} ${staff.last_name}`;
+          }
+        }
       })
       .addCase(assignStaffToWorkstation.rejected, (state, action) => {
         state.loading = false;
@@ -400,8 +411,15 @@ const workstationSlice = createSlice({
       .addCase(removeStaffFromWorkstation.pending, (state) => {
         state.loading = true;
       })
-      .addCase(removeStaffFromWorkstation.fulfilled, (state) => {
+      .addCase(removeStaffFromWorkstation.fulfilled, (state, action) => {
         state.loading = false;
+        // Update the workstation in the workstations array
+        const workstationId = action.meta.arg;
+        const workstationIndex = state.workstations.findIndex(ws => ws.id === workstationId);
+        if (workstationIndex !== -1) {
+          state.workstations[workstationIndex].assigned_staff_id = undefined;
+          state.workstations[workstationIndex].assigned_staff_name = undefined;
+        }
       })
       .addCase(removeStaffFromWorkstation.rejected, (state, action) => {
         state.loading = false;

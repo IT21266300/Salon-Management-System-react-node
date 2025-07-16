@@ -55,7 +55,6 @@ import {
   Group as GroupIcon,
   ContactMail as ContactMailIcon,
 } from '@mui/icons-material';
-import { API_ENDPOINTS } from '../config/api';
 
 interface Supplier {
   id: string;
@@ -183,6 +182,7 @@ const Suppliers: React.FC = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(0);
@@ -203,7 +203,14 @@ const Suppliers: React.FC = () => {
 
   const fetchSuppliers = async () => {
     try {
-      // Mock data since API_ENDPOINTS might not be available
+      const response = await fetch('http://localhost:3000/api/suppliers');
+      const data = await response.json();
+      if (data.success) {
+        setSuppliers(data.suppliers);
+      }
+    } catch (error) {
+      console.error('Error fetching suppliers:', error);
+      // Fallback to mock data if API fails
       const mockSuppliers: Supplier[] = [
         {
           id: '1',
@@ -258,8 +265,6 @@ const Suppliers: React.FC = () => {
       ];
       
       setSuppliers(mockSuppliers);
-    } catch (error) {
-      console.error('Error fetching suppliers:', error);
     } finally {
       setLoading(false);
     }
@@ -269,11 +274,11 @@ const Suppliers: React.FC = () => {
     if (supplier) {
       setEditingSupplier(supplier);
       setFormData({
-        name: supplier.name,
-        contactPerson: supplier.contact_person,
-        email: supplier.email,
-        phone: supplier.phone,
-        address: supplier.address,
+        name: supplier.name || '',
+        contactPerson: supplier.contact_person || '',
+        email: supplier.email || '',
+        phone: supplier.phone || '',
+        address: supplier.address || '',
       });
     } else {
       setEditingSupplier(null);
@@ -295,42 +300,113 @@ const Suppliers: React.FC = () => {
 
   const handleSaveSupplier = async () => {
     try {
-      // Mock save operation
-      const newSupplier: Supplier = {
-        id: Date.now().toString(),
-        name: formData.name,
-        contact_person: formData.contactPerson,
-        email: formData.email,
-        phone: formData.phone,
-        address: formData.address,
-        status: 'active',
-        created_at: new Date().toISOString(),
-      };
-
-      if (editingSupplier) {
-        setSuppliers(prev => prev.map(s => s.id === editingSupplier.id ? { ...newSupplier, id: editingSupplier.id } : s));
-      } else {
-        setSuppliers(prev => [...prev, newSupplier]);
+      setSaving(true);
+      
+      // Validate required fields
+      if (!formData.name?.trim()) {
+        alert('Supplier name is required');
+        return;
       }
 
-      handleCloseDialog();
+      // Validate email format if provided
+      if (formData.email?.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+        alert('Please enter a valid email address');
+        return;
+      }
+
+      const supplierData = {
+        name: formData.name?.trim() || '',
+        contactPerson: formData.contactPerson?.trim() || '',
+        email: formData.email?.trim() || '',
+        phone: formData.phone?.trim() || '',
+        address: formData.address?.trim() || '',
+      };
+
+      const url = editingSupplier 
+        ? `http://localhost:3000/api/suppliers/${editingSupplier.id}`
+        : 'http://localhost:3000/api/suppliers';
+      
+      const method = editingSupplier ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(supplierData),
+      });
+
+      if (response.ok) {
+        fetchSuppliers(); // Refresh the suppliers list
+        handleCloseDialog();
+      } else {
+        const errorData = await response.json();
+        console.error('Error saving supplier:', errorData);
+        if (errorData.errors && errorData.errors.length > 0) {
+          alert('Validation errors: ' + errorData.errors.map((err: any) => err.msg).join(', '));
+        } else {
+          alert('Error saving supplier: ' + (errorData.message || 'Unknown error'));
+        }
+      }
     } catch (error) {
       console.error('Error saving supplier:', error);
+      alert('Error saving supplier: ' + error.message);
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleDeleteSupplier = (supplierId: string) => {
+  const handleDeleteSupplier = async (supplierId: string) => {
     if (window.confirm('Are you sure you want to delete this supplier?')) {
-      setSuppliers(prev => prev.filter(s => s.id !== supplierId));
+      try {
+        const response = await fetch(`http://localhost:3000/api/suppliers/${supplierId}`, {
+          method: 'DELETE',
+        });
+
+        if (response.ok) {
+          fetchSuppliers(); // Refresh the suppliers list
+        } else {
+          const errorData = await response.json();
+          console.error('Error deleting supplier:', errorData);
+          alert('Error deleting supplier: ' + (errorData.message || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Error deleting supplier:', error);
+        alert('Error deleting supplier: ' + error.message);
+      }
+    }
+  };
+
+  const handleToggleStatus = async (supplierId: string, currentStatus: string) => {
+    try {
+      const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+      const response = await fetch(`http://localhost:3000/api/suppliers/${supplierId}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (response.ok) {
+        fetchSuppliers(); // Refresh the suppliers list
+      } else {
+        const errorData = await response.json();
+        console.error('Error toggling supplier status:', errorData);
+        alert('Error toggling supplier status: ' + (errorData.message || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Error toggling supplier status:', error);
+      alert('Error toggling supplier status: ' + error.message);
     }
   };
 
   // Filter suppliers based on search and status
   const filteredSuppliers = suppliers.filter(supplier => {
-    const matchesSearch = supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         supplier.contact_person.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         supplier.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         supplier.phone.includes(searchTerm);
+    const matchesSearch = (supplier.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (supplier.contact_person || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (supplier.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (supplier.phone || '').includes(searchTerm);
     const matchesStatus = statusFilter === 'all' || supplier.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -341,7 +417,7 @@ const Suppliers: React.FC = () => {
       case 0: return filteredSuppliers; // All suppliers
       case 1: return filteredSuppliers.filter(s => s.status === 'active'); // Active suppliers
       case 2: return filteredSuppliers.filter(s => s.status === 'inactive'); // Inactive suppliers
-      case 3: return filteredSuppliers.filter(s => s.email && s.phone); // Complete contact info
+      case 3: return filteredSuppliers.filter(s => s.email && s.email.trim() && s.phone && s.phone.trim()); // Complete contact info
       default: return filteredSuppliers;
     }
   };
@@ -353,7 +429,7 @@ const Suppliers: React.FC = () => {
   const totalSuppliers = suppliers.length;
   const activeSuppliers = suppliers.filter(s => s.status === 'active').length;
   const inactiveSuppliers = suppliers.filter(s => s.status === 'inactive').length;
-  const suppliersWithEmail = suppliers.filter(s => s.email).length;
+  const suppliersWithEmail = suppliers.filter(s => s.email && s.email.trim()).length;
 
   if (loading) {
     return (
@@ -586,7 +662,7 @@ const Suppliers: React.FC = () => {
           <Tab label={`All Suppliers (${suppliers.length})`} />
           <Tab label={`Active (${activeSuppliers})`} />
           <Tab label={`Inactive (${inactiveSuppliers})`} />
-          <Tab label={`Complete Info (${suppliers.filter(s => s.email && s.phone).length})`} />
+          <Tab label={`Complete Info (${suppliers.filter(s => s.email && s.email.trim() && s.phone && s.phone.trim()).length})`} />
         </Tabs>
 
         {/* Table */}
@@ -716,6 +792,20 @@ const Suppliers: React.FC = () => {
                             }}
                           >
                             <EditIcon sx={{ fontSize: 18 }} />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title={supplier.status === 'active' ? 'Deactivate Supplier' : 'Activate Supplier'}>
+                          <IconButton 
+                            onClick={() => handleToggleStatus(supplier.id, supplier.status)} 
+                            size="small"
+                            sx={{
+                              color: supplier.status === 'active' ? '#F39C12' : '#27AE60',
+                              '&:hover': {
+                                backgroundColor: supplier.status === 'active' ? 'rgba(243, 156, 18, 0.1)' : 'rgba(39, 174, 96, 0.1)'
+                              }
+                            }}
+                          >
+                            {supplier.status === 'active' ? <InactiveIcon sx={{ fontSize: 18 }} /> : <ActiveIcon sx={{ fontSize: 18 }} />}
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="Delete Supplier">
@@ -1140,7 +1230,7 @@ const Suppliers: React.FC = () => {
           <Button 
             onClick={handleSaveSupplier} 
             variant="contained"
-            disabled={!formData.name.trim()}
+            disabled={!formData.name?.trim() || saving}
             sx={{
               background: 'linear-gradient(135deg, #8B4513 0%, #A0522D 100%)',
               px: 4,
@@ -1155,7 +1245,7 @@ const Suppliers: React.FC = () => {
               transition: 'all 0.3s ease',
             }}
           >
-            {editingSupplier ? 'Update Supplier' : 'Add Supplier'}
+            {saving ? 'Saving...' : (editingSupplier ? 'Update Supplier' : 'Add Supplier')}
           </Button>
         </DialogActions>
       </Dialog>

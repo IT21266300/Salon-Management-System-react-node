@@ -40,6 +40,7 @@ import {
   LinearProgress,
   Fade,
 } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import {
   Add as AddIcon,
   PointOfSale as SalesIcon,
@@ -264,6 +265,13 @@ const Sales: React.FC = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [tabValue, setTabValue] = useState(0);
+  const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false);
+  const [advancedFilters, setAdvancedFilters] = useState({
+    amountRange: { min: '', max: '' },
+    dateRange: { start: null as any, end: null as any },
+    staffFilter: 'all',
+    customerFilter: 'all',
+  });
 
   const [currentSale, setCurrentSale] = useState<{
     customerId: string;
@@ -572,7 +580,22 @@ const Sales: React.FC = () => {
                          sale.id.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || sale.status === statusFilter;
     const matchesPayment = paymentFilter === 'all' || sale.payment_method === paymentFilter;
-    return matchesSearch && matchesStatus && matchesPayment;
+    
+    // Advanced filters
+    const matchesAmountRange = 
+      (!advancedFilters.amountRange.min || sale.total >= parseFloat(advancedFilters.amountRange.min)) &&
+      (!advancedFilters.amountRange.max || sale.total <= parseFloat(advancedFilters.amountRange.max));
+    
+    const matchesDateRange = 
+      (!advancedFilters.dateRange.start || !advancedFilters.dateRange.end) ||
+      (dayjs(sale.sale_date).isAfter(dayjs(advancedFilters.dateRange.start).subtract(1, 'day')) &&
+       dayjs(sale.sale_date).isBefore(dayjs(advancedFilters.dateRange.end).add(1, 'day')));
+    
+    const matchesStaffFilter = advancedFilters.staffFilter === 'all' || sale.staff_id === advancedFilters.staffFilter;
+    const matchesCustomerFilter = advancedFilters.customerFilter === 'all' || sale.customer_id === advancedFilters.customerFilter;
+    
+    return matchesSearch && matchesStatus && matchesPayment && matchesAmountRange && 
+           matchesDateRange && matchesStaffFilter && matchesCustomerFilter;
   });
 
   // Get sales by tab
@@ -591,6 +614,18 @@ const Sales: React.FC = () => {
 
   const currentSales = getSalesByTab();
   const paginatedSales = currentSales.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
+  // Check if any filters are active
+  const hasActiveFilters = Boolean(
+    statusFilter !== 'all' ||
+    paymentFilter !== 'all' ||
+    advancedFilters.amountRange.min ||
+    advancedFilters.amountRange.max ||
+    advancedFilters.dateRange.start ||
+    advancedFilters.dateRange.end ||
+    advancedFilters.staffFilter !== 'all' ||
+    advancedFilters.customerFilter !== 'all'
+  );
 
   // Calculate stats
   const todaySales = sales.filter(sale => 
@@ -786,23 +821,72 @@ const Sales: React.FC = () => {
             </FormControl>
           </Grid>
           <Grid item xs={12} md={2}>
-            <Button
-              variant="outlined"
-              startIcon={<FilterIcon />}
-              fullWidth
-              sx={{
-                py: 1.5,
-                borderRadius: 2,
-                borderColor: '#8B4513',
-                color: '#8B4513',
-                '&:hover': {
+            {hasActiveFilters ? (
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <Button
+                  variant="outlined"
+                  startIcon={<FilterIcon />}
+                  onClick={() => setAdvancedFiltersOpen(true)}
+                  sx={{
+                    flex: 1,
+                    py: 1.5,
+                    borderRadius: 2,
+                    borderColor: '#8B4513',
+                    color: '#8B4513',
+                    '&:hover': {
+                      borderColor: '#8B4513',
+                      backgroundColor: 'rgba(139, 69, 19, 0.04)',
+                    }
+                  }}
+                >
+                  Filters
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={() => {
+                    setStatusFilter('all');
+                    setPaymentFilter('all');
+                    setAdvancedFilters({
+                      amountRange: { min: '', max: '' },
+                      dateRange: { start: null, end: null },
+                      staffFilter: 'all',
+                      customerFilter: 'all',
+                    });
+                  }}
+                  sx={{
+                    py: 1.5,
+                    borderRadius: 2,
+                    borderColor: '#E74C3C',
+                    color: '#E74C3C',
+                    '&:hover': {
+                      borderColor: '#E74C3C',
+                      backgroundColor: 'rgba(231, 76, 60, 0.04)',
+                    }
+                  }}
+                >
+                  Clear
+                </Button>
+              </Box>
+            ) : (
+              <Button
+                variant="outlined"
+                startIcon={<FilterIcon />}
+                fullWidth
+                onClick={() => setAdvancedFiltersOpen(true)}
+                sx={{
+                  py: 1.5,
+                  borderRadius: 2,
                   borderColor: '#8B4513',
-                  backgroundColor: 'rgba(139, 69, 19, 0.04)',
-                }
-              }}
-            >
-              Advanced
-            </Button>
+                  color: '#8B4513',
+                  '&:hover': {
+                    borderColor: '#8B4513',
+                    backgroundColor: 'rgba(139, 69, 19, 0.04)',
+                  }
+                }}
+              >
+                Advanced
+              </Button>
+            )}
           </Grid>
         </Grid>
       </Paper>
@@ -1549,6 +1633,272 @@ const Sales: React.FC = () => {
             }}
           >
             Complete Sale
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Advanced Filters Dialog */}
+      <Dialog
+        open={advancedFiltersOpen}
+        onClose={() => setAdvancedFiltersOpen(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,246,240,0.95) 100%)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(139, 69, 19, 0.08)',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+          }
+        }}
+      >
+        <DialogTitle
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            pb: 2,
+            borderBottom: '1px solid rgba(139, 69, 19, 0.08)',
+            background: 'linear-gradient(135deg, rgba(139, 69, 19, 0.03) 0%, rgba(212, 175, 55, 0.03) 100%)',
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Avatar
+              sx={{
+                width: 48,
+                height: 48,
+                background: 'linear-gradient(135deg, #8B4513 0%, #A0522D 100%)',
+              }}
+            >
+              <FilterIcon />
+            </Avatar>
+            <Box>
+              <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                Advanced Filters
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Filter sales by specific criteria
+              </Typography>
+            </Box>
+          </Box>
+          <IconButton
+            onClick={() => setAdvancedFiltersOpen(false)}
+            sx={{
+              color: 'text.secondary',
+              '&:hover': {
+                backgroundColor: 'rgba(139, 69, 19, 0.1)',
+                color: '#8B4513',
+              }
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent sx={{ p: 4 }}>
+          <Grid container spacing={3}>
+            {/* Amount Range */}
+            <Grid item xs={12}>
+              <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: '#8B4513' }}>
+                Sale Amount Range
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Minimum Amount"
+                type="number"
+                value={advancedFilters.amountRange.min}
+                onChange={(e) => setAdvancedFilters({
+                  ...advancedFilters,
+                  amountRange: { ...advancedFilters.amountRange, min: e.target.value }
+                })}
+                fullWidth
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Maximum Amount"
+                type="number"
+                value={advancedFilters.amountRange.max}
+                onChange={(e) => setAdvancedFilters({
+                  ...advancedFilters,
+                  amountRange: { ...advancedFilters.amountRange, max: e.target.value }
+                })}
+                fullWidth
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+              />
+            </Grid>
+
+            {/* Date Range */}
+            <Grid item xs={12}>
+              <Typography variant="h6" sx={{ mb: 2, mt: 2, fontWeight: 600, color: '#8B4513' }}>
+                Sale Date Range
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <DatePicker
+                label="Start Date"
+                value={advancedFilters.dateRange.start}
+                onChange={(newValue) => setAdvancedFilters({
+                  ...advancedFilters,
+                  dateRange: { ...advancedFilters.dateRange, start: newValue }
+                })}
+                slotProps={{ 
+                  textField: { 
+                    fullWidth: true,
+                    sx: { '& .MuiOutlinedInput-root': { borderRadius: 2 } }
+                  } 
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <DatePicker
+                label="End Date"
+                value={advancedFilters.dateRange.end}
+                onChange={(newValue) => setAdvancedFilters({
+                  ...advancedFilters,
+                  dateRange: { ...advancedFilters.dateRange, end: newValue }
+                })}
+                slotProps={{ 
+                  textField: { 
+                    fullWidth: true,
+                    sx: { '& .MuiOutlinedInput-root': { borderRadius: 2 } }
+                  } 
+                }}
+              />
+            </Grid>
+
+            {/* Staff Filter */}
+            <Grid item xs={12}>
+              <Typography variant="h6" sx={{ mb: 2, mt: 2, fontWeight: 600, color: '#8B4513' }}>
+                Staff & Customer Filters
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Staff Member</InputLabel>
+                <Select
+                  value={advancedFilters.staffFilter}
+                  label="Staff Member"
+                  onChange={(e) => setAdvancedFilters({
+                    ...advancedFilters,
+                    staffFilter: e.target.value
+                  })}
+                  sx={{
+                    borderRadius: 2,
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgba(139, 69, 19, 0.2)',
+                    }
+                  }}
+                >
+                  <MenuItem value="all">All Staff</MenuItem>
+                  {staff.map((staffMember) => (
+                    <MenuItem key={staffMember.id} value={staffMember.id}>
+                      {staffMember.first_name} {staffMember.last_name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+
+            {/* Customer Filter */}
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Customer</InputLabel>
+                <Select
+                  value={advancedFilters.customerFilter}
+                  label="Customer"
+                  onChange={(e) => setAdvancedFilters({
+                    ...advancedFilters,
+                    customerFilter: e.target.value
+                  })}
+                  sx={{
+                    borderRadius: 2,
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgba(139, 69, 19, 0.2)',
+                    }
+                  }}
+                >
+                  <MenuItem value="all">All Customers</MenuItem>
+                  {customers.map((customer) => (
+                    <MenuItem key={customer.id} value={customer.id}>
+                      {customer.first_name} {customer.last_name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
+        </DialogContent>
+
+        <DialogActions 
+          sx={{ 
+            p: 3, 
+            borderTop: '1px solid rgba(139, 69, 19, 0.08)',
+            background: 'linear-gradient(135deg, rgba(139, 69, 19, 0.02) 0%, rgba(212, 175, 55, 0.02) 100%)',
+          }}
+        >
+          <Button 
+            onClick={() => {
+              setAdvancedFilters({
+                amountRange: { min: '', max: '' },
+                dateRange: { start: null, end: null },
+                staffFilter: 'all',
+                customerFilter: 'all',
+              });
+            }}
+            sx={{ 
+              color: 'text.secondary',
+              px: 3,
+              py: 1,
+              borderRadius: 2,
+              '&:hover': {
+                backgroundColor: 'rgba(139, 69, 19, 0.05)',
+              }
+            }}
+          >
+            Clear All
+          </Button>
+          <Button 
+            onClick={() => setAdvancedFiltersOpen(false)}
+            sx={{ 
+              color: 'text.secondary',
+              px: 3,
+              py: 1,
+              borderRadius: 2,
+              '&:hover': {
+                backgroundColor: 'rgba(139, 69, 19, 0.05)',
+              }
+            }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={() => setAdvancedFiltersOpen(false)}
+            variant="contained"
+            sx={{
+              background: 'linear-gradient(135deg, #8B4513 0%, #A0522D 100%)',
+              px: 4,
+              py: 1,
+              borderRadius: 2,
+              fontWeight: 600,
+              '&:hover': {
+                background: 'linear-gradient(135deg, #A0522D 0%, #8B4513 100%)',
+                transform: 'translateY(-1px)',
+                boxShadow: '0 6px 20px rgba(139, 69, 19, 0.3)',
+              },
+              transition: 'all 0.3s ease',
+            }}
+          >
+            Apply Filters
           </Button>
         </DialogActions>
       </Dialog>

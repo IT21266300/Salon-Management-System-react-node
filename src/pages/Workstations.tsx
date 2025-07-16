@@ -482,16 +482,13 @@ const Workstations: React.FC = () => {
     if (!selectedWorkstation || !selectedStaffId) return;
     setAssignError(null);
     try {
-      const result = await dispatch(assignStaffToWorkstation({
+      await dispatch(assignStaffToWorkstation({
         workstationId: selectedWorkstation.id,
         staffId: selectedStaffId
       })).unwrap();
-      if (result && result.success) {
-        handleCloseStaffDialog();
-        dispatch(fetchWorkstations());
-      } else if (result && result.message) {
-        setAssignError(result.message);
-      }
+      handleCloseStaffDialog();
+      // Refresh workstations to ensure UI is updated
+      dispatch(fetchWorkstations());
     } catch (err: unknown) {
       setAssignError(err instanceof Error ? err.message : (typeof err === 'string' ? err : 'Failed to assign staff'));
     }

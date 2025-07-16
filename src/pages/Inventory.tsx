@@ -38,6 +38,8 @@ import {
   LinearProgress,
   Badge,
 } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
 import {
   Add as AddIcon,
   Edit as EditIcon,
@@ -227,6 +229,13 @@ const Inventory: React.FC = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [tabValue, setTabValue] = useState(0);
+  const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false);
+  const [advancedFilters, setAdvancedFilters] = useState({
+    priceRange: { min: '', max: '' },
+    stockRange: { min: '', max: '' },
+    createdDateRange: { start: null as any, end: null as any },
+    supplierFilter: 'all',
+  });
 
   const [formData, setFormData] = useState({
     name: '',
@@ -440,7 +449,25 @@ const Inventory: React.FC = () => {
                          product.category.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = categoryFilter === 'all' || product.category === categoryFilter;
     const matchesStatus = statusFilter === 'all' || product.status === statusFilter;
-    return matchesSearch && matchesCategory && matchesStatus;
+    
+    // Advanced filters
+    const matchesPriceRange = 
+      (!advancedFilters.priceRange.min || product.selling_price >= parseFloat(advancedFilters.priceRange.min)) &&
+      (!advancedFilters.priceRange.max || product.selling_price <= parseFloat(advancedFilters.priceRange.max));
+    
+    const matchesStockRange = 
+      (!advancedFilters.stockRange.min || product.quantity_in_stock >= parseInt(advancedFilters.stockRange.min)) &&
+      (!advancedFilters.stockRange.max || product.quantity_in_stock <= parseInt(advancedFilters.stockRange.max));
+    
+    const matchesCreatedDateRange = 
+      (!advancedFilters.createdDateRange.start || !advancedFilters.createdDateRange.end) ||
+      (dayjs(product.created_at).isAfter(dayjs(advancedFilters.createdDateRange.start).subtract(1, 'day')) &&
+       dayjs(product.created_at).isBefore(dayjs(advancedFilters.createdDateRange.end).add(1, 'day')));
+    
+    const matchesSupplierFilter = advancedFilters.supplierFilter === 'all' || product.supplier_id === advancedFilters.supplierFilter;
+    
+    return matchesSearch && matchesCategory && matchesStatus && matchesPriceRange && 
+           matchesStockRange && matchesCreatedDateRange && matchesSupplierFilter;
   });
 
   // Get products by tab
@@ -456,6 +483,19 @@ const Inventory: React.FC = () => {
 
   const currentProducts = getProductsByTab();
   const paginatedProducts = currentProducts.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
+  // Check if any filters are active
+  const hasActiveFilters = Boolean(
+    categoryFilter !== 'all' ||
+    statusFilter !== 'all' ||
+    advancedFilters.priceRange.min ||
+    advancedFilters.priceRange.max ||
+    advancedFilters.stockRange.min ||
+    advancedFilters.stockRange.max ||
+    advancedFilters.createdDateRange.start ||
+    advancedFilters.createdDateRange.end ||
+    advancedFilters.supplierFilter !== 'all'
+  );
 
   // Calculate stats
   const lowStockProducts = products.filter(p => p.quantity_in_stock <= p.reorder_level);
@@ -688,23 +728,72 @@ const Inventory: React.FC = () => {
             </FormControl>
           </Grid>
           <Grid item xs={12} md={3}>
-            <Button
-              variant="outlined"
-              startIcon={<FilterIcon />}
-              fullWidth
-              sx={{
-                py: 1.5,
-                borderRadius: 2,
-                borderColor: '#8B4513',
-                color: '#8B4513',
-                '&:hover': {
+            {hasActiveFilters ? (
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <Button
+                  variant="outlined"
+                  startIcon={<FilterIcon />}
+                  onClick={() => setAdvancedFiltersOpen(true)}
+                  sx={{
+                    flex: 1,
+                    py: 1.5,
+                    borderRadius: 2,
+                    borderColor: '#8B4513',
+                    color: '#8B4513',
+                    '&:hover': {
+                      borderColor: '#8B4513',
+                      backgroundColor: 'rgba(139, 69, 19, 0.04)',
+                    }
+                  }}
+                >
+                  Filters
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={() => {
+                    setCategoryFilter('all');
+                    setStatusFilter('all');
+                    setAdvancedFilters({
+                      priceRange: { min: '', max: '' },
+                      stockRange: { min: '', max: '' },
+                      createdDateRange: { start: null, end: null },
+                      supplierFilter: 'all',
+                    });
+                  }}
+                  sx={{
+                    py: 1.5,
+                    borderRadius: 2,
+                    borderColor: '#E74C3C',
+                    color: '#E74C3C',
+                    '&:hover': {
+                      borderColor: '#E74C3C',
+                      backgroundColor: 'rgba(231, 76, 60, 0.04)',
+                    }
+                  }}
+                >
+                  Clear
+                </Button>
+              </Box>
+            ) : (
+              <Button
+                variant="outlined"
+                startIcon={<FilterIcon />}
+                fullWidth
+                onClick={() => setAdvancedFiltersOpen(true)}
+                sx={{
+                  py: 1.5,
+                  borderRadius: 2,
                   borderColor: '#8B4513',
-                  backgroundColor: 'rgba(139, 69, 19, 0.04)',
-                }
-              }}
-            >
-              Advanced Filters
-            </Button>
+                  color: '#8B4513',
+                  '&:hover': {
+                    borderColor: '#8B4513',
+                    backgroundColor: 'rgba(139, 69, 19, 0.04)',
+                  }
+                }}
+              >
+                Advanced Filters
+              </Button>
+            )}
           </Grid>
         </Grid>
       </Paper>
@@ -1449,6 +1538,283 @@ const Inventory: React.FC = () => {
             }}
           >
             {editingProduct ? 'Update Product' : 'Add Product'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Advanced Filters Dialog */}
+      <Dialog
+        open={advancedFiltersOpen}
+        onClose={() => setAdvancedFiltersOpen(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,246,240,0.95) 100%)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(139, 69, 19, 0.08)',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+          }
+        }}
+      >
+        <DialogTitle
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            pb: 2,
+            borderBottom: '1px solid rgba(139, 69, 19, 0.08)',
+            background: 'linear-gradient(135deg, rgba(139, 69, 19, 0.03) 0%, rgba(212, 175, 55, 0.03) 100%)',
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Avatar
+              sx={{
+                width: 48,
+                height: 48,
+                background: 'linear-gradient(135deg, #8B4513 0%, #A0522D 100%)',
+              }}
+            >
+              <FilterIcon />
+            </Avatar>
+            <Box>
+              <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                Advanced Filters
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Filter inventory by specific criteria
+              </Typography>
+            </Box>
+          </Box>
+          <IconButton
+            onClick={() => setAdvancedFiltersOpen(false)}
+            sx={{
+              color: 'text.secondary',
+              '&:hover': {
+                backgroundColor: 'rgba(139, 69, 19, 0.1)',
+                color: '#8B4513',
+              }
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent sx={{ p: 4 }}>
+          <Grid container spacing={3}>
+            {/* Price Range */}
+            <Grid item xs={12}>
+              <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: '#8B4513' }}>
+                Price Range
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Minimum Price"
+                type="number"
+                value={advancedFilters.priceRange.min}
+                onChange={(e) => setAdvancedFilters({
+                  ...advancedFilters,
+                  priceRange: { ...advancedFilters.priceRange, min: e.target.value }
+                })}
+                fullWidth
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Maximum Price"
+                type="number"
+                value={advancedFilters.priceRange.max}
+                onChange={(e) => setAdvancedFilters({
+                  ...advancedFilters,
+                  priceRange: { ...advancedFilters.priceRange, max: e.target.value }
+                })}
+                fullWidth
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+              />
+            </Grid>
+
+            {/* Stock Range */}
+            <Grid item xs={12}>
+              <Typography variant="h6" sx={{ mb: 2, mt: 2, fontWeight: 600, color: '#8B4513' }}>
+                Stock Quantity Range
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Minimum Stock"
+                type="number"
+                value={advancedFilters.stockRange.min}
+                onChange={(e) => setAdvancedFilters({
+                  ...advancedFilters,
+                  stockRange: { ...advancedFilters.stockRange, min: e.target.value }
+                })}
+                fullWidth
+                InputProps={{
+                  endAdornment: <InputAdornment position="end">units</InputAdornment>,
+                }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Maximum Stock"
+                type="number"
+                value={advancedFilters.stockRange.max}
+                onChange={(e) => setAdvancedFilters({
+                  ...advancedFilters,
+                  stockRange: { ...advancedFilters.stockRange, max: e.target.value }
+                })}
+                fullWidth
+                InputProps={{
+                  endAdornment: <InputAdornment position="end">units</InputAdornment>,
+                }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+              />
+            </Grid>
+
+            {/* Created Date Range */}
+            <Grid item xs={12}>
+              <Typography variant="h6" sx={{ mb: 2, mt: 2, fontWeight: 600, color: '#8B4513' }}>
+                Created Date Range
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <DatePicker
+                label="Start Date"
+                value={advancedFilters.createdDateRange.start}
+                onChange={(newValue) => setAdvancedFilters({
+                  ...advancedFilters,
+                  createdDateRange: { ...advancedFilters.createdDateRange, start: newValue }
+                })}
+                slotProps={{ 
+                  textField: { 
+                    fullWidth: true,
+                    sx: { '& .MuiOutlinedInput-root': { borderRadius: 2 } }
+                  } 
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <DatePicker
+                label="End Date"
+                value={advancedFilters.createdDateRange.end}
+                onChange={(newValue) => setAdvancedFilters({
+                  ...advancedFilters,
+                  createdDateRange: { ...advancedFilters.createdDateRange, end: newValue }
+                })}
+                slotProps={{ 
+                  textField: { 
+                    fullWidth: true,
+                    sx: { '& .MuiOutlinedInput-root': { borderRadius: 2 } }
+                  } 
+                }}
+              />
+            </Grid>
+
+            {/* Supplier Filter */}
+            <Grid item xs={12}>
+              <Typography variant="h6" sx={{ mb: 2, mt: 2, fontWeight: 600, color: '#8B4513' }}>
+                Supplier Filter
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Supplier</InputLabel>
+                <Select
+                  value={advancedFilters.supplierFilter}
+                  label="Supplier"
+                  onChange={(e) => setAdvancedFilters({
+                    ...advancedFilters,
+                    supplierFilter: e.target.value
+                  })}
+                  sx={{
+                    borderRadius: 2,
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgba(139, 69, 19, 0.2)',
+                    }
+                  }}
+                >
+                  <MenuItem value="all">All Suppliers</MenuItem>
+                  {suppliers.map((supplier) => (
+                    <MenuItem key={supplier.id} value={supplier.id}>
+                      {supplier.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
+        </DialogContent>
+
+        <DialogActions 
+          sx={{ 
+            p: 3, 
+            borderTop: '1px solid rgba(139, 69, 19, 0.08)',
+            background: 'linear-gradient(135deg, rgba(139, 69, 19, 0.02) 0%, rgba(212, 175, 55, 0.02) 100%)',
+          }}
+        >
+          <Button 
+            onClick={() => {
+              setAdvancedFilters({
+                priceRange: { min: '', max: '' },
+                stockRange: { min: '', max: '' },
+                createdDateRange: { start: null, end: null },
+                supplierFilter: 'all',
+              });
+            }}
+            sx={{ 
+              color: 'text.secondary',
+              px: 3,
+              py: 1,
+              borderRadius: 2,
+              '&:hover': {
+                backgroundColor: 'rgba(139, 69, 19, 0.05)',
+              }
+            }}
+          >
+            Clear All
+          </Button>
+          <Button 
+            onClick={() => setAdvancedFiltersOpen(false)}
+            sx={{ 
+              color: 'text.secondary',
+              px: 3,
+              py: 1,
+              borderRadius: 2,
+              '&:hover': {
+                backgroundColor: 'rgba(139, 69, 19, 0.05)',
+              }
+            }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={() => setAdvancedFiltersOpen(false)}
+            variant="contained"
+            sx={{
+              background: 'linear-gradient(135deg, #8B4513 0%, #A0522D 100%)',
+              px: 4,
+              py: 1,
+              borderRadius: 2,
+              fontWeight: 600,
+              '&:hover': {
+                background: 'linear-gradient(135deg, #A0522D 0%, #8B4513 100%)',
+                transform: 'translateY(-1px)',
+                boxShadow: '0 6px 20px rgba(139, 69, 19, 0.3)',
+              },
+              transition: 'all 0.3s ease',
+            }}
+          >
+            Apply Filters
           </Button>
         </DialogActions>
       </Dialog>
