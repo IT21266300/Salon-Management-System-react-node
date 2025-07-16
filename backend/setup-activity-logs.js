@@ -22,7 +22,7 @@ try {
       ip_address TEXT,
       user_agent TEXT,
       status TEXT DEFAULT 'success',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      created_at DATETIME DEFAULT (datetime('now', 'localtime')),
       FOREIGN KEY (user_id) REFERENCES users(id)
     )
   `);

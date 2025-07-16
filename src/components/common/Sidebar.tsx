@@ -29,6 +29,7 @@ import {
 } from '@mui/icons-material';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
+import { useNotifications } from '../../hooks/useNotifications';
 
 const menuItems = [
   { path: '/dashboard', label: 'Dashboard', icon: <DashboardIcon />, category: 'main' },
@@ -68,8 +69,15 @@ const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const { user } = useSelector((state: RootState) => state.auth);
+  const { showError } = useNotifications();
 
-  const canAccessAdmin = user?.role === 'admin' || user?.role === 'manager';
+  const handleAdminClick = (path: string) => {
+    if (user?.role !== 'admin') {
+      showError('You have not access', 'Access Denied');
+      return;
+    }
+    navigate(path);
+  };
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -423,15 +431,14 @@ const Sidebar: React.FC = () => {
         </List>
 
         {/* Admin Section */}
-        {canAccessAdmin && (
-          <>
-            <CategoryHeader title="Admin" />
-            <List dense sx={{ px: 1, pb: 2 }}>
-              {adminItems.map((item) => (
-                <ListItem key={item.path} disablePadding sx={{ mb: 0.5 }}>
-                  <ListItemButton
-                    selected={location.pathname === item.path}
-                    onClick={() => navigate(item.path)}
+        <>
+          <CategoryHeader title="Admin" />
+          <List dense sx={{ px: 1, pb: 2 }}>
+            {adminItems.map((item) => (
+              <ListItem key={item.path} disablePadding sx={{ mb: 0.5 }}>
+                <ListItemButton
+                  selected={location.pathname === item.path}
+                  onClick={() => handleAdminClick(item.path)}
                     sx={{
                       borderRadius: 2,
                       py: 1.5,
@@ -487,7 +494,6 @@ const Sidebar: React.FC = () => {
               ))}
             </List>
           </>
-        )}
       </Box>
     </Box>
   );

@@ -37,6 +37,9 @@ export const API_ENDPOINTS = {
   
   // Workstations
   WORKSTATIONS: `${API_BASE_URL}/workstations`,
+  
+  // Activity Logs
+  ACTIVITY_LOGS: `${API_BASE_URL}/activity-logs`,
 };
 
 // Helper function to build API URLs

@@ -19,6 +19,7 @@ import {
   Alert,
   Pagination,
 } from '@mui/material';
+import { API_ENDPOINTS } from '../../config/api';
 
 interface ActivityLog {
   id: string;
@@ -51,6 +52,8 @@ const ActivityLogs: React.FC = () => {
   const fetchActivityLogs = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
+      
       const params = new URLSearchParams({
         page: pagination.page.toString(),
         limit: pagination.limit.toString(),
@@ -59,13 +62,17 @@ const ActivityLogs: React.FC = () => {
         ...(filter.status && filter.status !== '' && { status: filter.status }),
       });
 
-      const response = await fetch(`http://localhost:3001/api/activity-logs?${params}`);
+      const response = await fetch(`${API_ENDPOINTS.ACTIVITY_LOGS}?${params}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
 
-      if (data.success) {
+      if (data.success && data.logs) {
         setLogs(data.logs);
         setPagination(data.pagination);
-        setError(null);
       } else {
         setError('Failed to fetch activity logs');
       }
