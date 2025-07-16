@@ -59,6 +59,7 @@ import {
   AttachMoney as MoneyIcon,
   Event as EventIcon,
 } from '@mui/icons-material';
+import { DatePicker } from '@mui/x-date-pickers';
 import dayjs from 'dayjs';
 
 interface Customer {
@@ -195,6 +196,15 @@ const Customers: React.FC = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [tabValue, setTabValue] = useState(0);
+  const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false);
+  const [advancedFilters, setAdvancedFilters] = useState({
+    visitRange: { min: '', max: '' },
+    spentRange: { min: '', max: '' },
+    createdDateRange: { start: '', end: '' },
+    hasEmail: 'all',
+    hasPhone: 'all',
+    hasAddress: 'all',
+  });
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -300,7 +310,7 @@ const Customers: React.FC = () => {
     }
   };
 
-  // Filter customers based on search and gender
+  // Filter customers based on search, gender, and advanced filters
   const filteredCustomers = customers.filter(customer => {
     const matchesSearch = 
       customer.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -308,7 +318,37 @@ const Customers: React.FC = () => {
       customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       customer.phone.includes(searchTerm);
     const matchesGender = genderFilter === 'all' || customer.gender === genderFilter;
-    return matchesSearch && matchesGender;
+    
+    // Advanced filters
+    const matchesVisitRange = 
+      (!advancedFilters.visitRange.min || customer.total_visits >= parseInt(advancedFilters.visitRange.min)) &&
+      (!advancedFilters.visitRange.max || customer.total_visits <= parseInt(advancedFilters.visitRange.max));
+    
+    const matchesSpentRange = 
+      (!advancedFilters.spentRange.min || customer.total_spent >= parseFloat(advancedFilters.spentRange.min)) &&
+      (!advancedFilters.spentRange.max || customer.total_spent <= parseFloat(advancedFilters.spentRange.max));
+    
+    const matchesCreatedDate = 
+      (!advancedFilters.createdDateRange.start || dayjs(customer.created_at).isAfter(dayjs(advancedFilters.createdDateRange.start).subtract(1, 'day'))) &&
+      (!advancedFilters.createdDateRange.end || dayjs(customer.created_at).isBefore(dayjs(advancedFilters.createdDateRange.end).add(1, 'day')));
+    
+    const matchesEmail = 
+      advancedFilters.hasEmail === 'all' || 
+      (advancedFilters.hasEmail === 'yes' && customer.email) ||
+      (advancedFilters.hasEmail === 'no' && !customer.email);
+    
+    const matchesPhone = 
+      advancedFilters.hasPhone === 'all' || 
+      (advancedFilters.hasPhone === 'yes' && customer.phone) ||
+      (advancedFilters.hasPhone === 'no' && !customer.phone);
+    
+    const matchesAddress = 
+      advancedFilters.hasAddress === 'all' || 
+      (advancedFilters.hasAddress === 'yes' && customer.address) ||
+      (advancedFilters.hasAddress === 'no' && !customer.address);
+    
+    return matchesSearch && matchesGender && matchesVisitRange && matchesSpentRange && 
+           matchesCreatedDate && matchesEmail && matchesPhone && matchesAddress;
   });
 
   // Get customers by tab
@@ -528,6 +568,7 @@ const Customers: React.FC = () => {
               variant="outlined"
               startIcon={<FilterIcon />}
               fullWidth
+              onClick={() => setAdvancedFiltersOpen(true)}
               sx={{
                 py: 1.5,
                 borderRadius: 2,
@@ -1175,6 +1216,276 @@ const Customers: React.FC = () => {
             }}
           >
             {editingCustomer ? 'Update Customer' : 'Add Customer'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Advanced Filters Dialog */}
+      <Dialog 
+        open={advancedFiltersOpen} 
+        onClose={() => setAdvancedFiltersOpen(false)} 
+        maxWidth="md" 
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,246,240,0.95) 100%)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(139, 69, 19, 0.08)',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+          }
+        }}
+      >
+        <DialogTitle
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            pb: 2,
+            borderBottom: '1px solid rgba(139, 69, 19, 0.08)',
+            background: 'linear-gradient(135deg, rgba(139, 69, 19, 0.03) 0%, rgba(212, 175, 55, 0.03) 100%)',
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Avatar
+              sx={{
+                width: 48,
+                height: 48,
+                background: 'linear-gradient(135deg, #8B4513 0%, #A0522D 100%)',
+              }}
+            >
+              <FilterIcon />
+            </Avatar>
+            <Box>
+              <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                Advanced Filters
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Refine your customer search with detailed filters
+              </Typography>
+            </Box>
+          </Box>
+          <IconButton
+            onClick={() => setAdvancedFiltersOpen(false)}
+            sx={{
+              color: 'text.secondary',
+              '&:hover': {
+                backgroundColor: 'rgba(139, 69, 19, 0.1)',
+                color: '#8B4513',
+              }
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent sx={{ p: 4 }}>
+          <Grid container spacing={3}>
+            {/* Visit Range */}
+            <Grid item xs={12} md={6}>
+              <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                Visit Range
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                <TextField
+                  label="Min Visits"
+                  type="number"
+                  value={advancedFilters.visitRange.min}
+                  onChange={(e) => setAdvancedFilters({
+                    ...advancedFilters,
+                    visitRange: { ...advancedFilters.visitRange, min: e.target.value }
+                  })}
+                  size="small"
+                  sx={{ flex: 1 }}
+                />
+                <Typography variant="body2" color="text.secondary">to</Typography>
+                <TextField
+                  label="Max Visits"
+                  type="number"
+                  value={advancedFilters.visitRange.max}
+                  onChange={(e) => setAdvancedFilters({
+                    ...advancedFilters,
+                    visitRange: { ...advancedFilters.visitRange, max: e.target.value }
+                  })}
+                  size="small"
+                  sx={{ flex: 1 }}
+                />
+              </Box>
+            </Grid>
+
+            {/* Spent Range */}
+            <Grid item xs={12} md={6}>
+              <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                Amount Spent Range
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                <TextField
+                  label="Min Amount"
+                  type="number"
+                  value={advancedFilters.spentRange.min}
+                  onChange={(e) => setAdvancedFilters({
+                    ...advancedFilters,
+                    spentRange: { ...advancedFilters.spentRange, min: e.target.value }
+                  })}
+                  InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
+                  size="small"
+                  sx={{ flex: 1 }}
+                />
+                <Typography variant="body2" color="text.secondary">to</Typography>
+                <TextField
+                  label="Max Amount"
+                  type="number"
+                  value={advancedFilters.spentRange.max}
+                  onChange={(e) => setAdvancedFilters({
+                    ...advancedFilters,
+                    spentRange: { ...advancedFilters.spentRange, max: e.target.value }
+                  })}
+                  InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
+                  size="small"
+                  sx={{ flex: 1 }}
+                />
+              </Box>
+            </Grid>
+
+            {/* Created Date Range */}
+            <Grid item xs={12}>
+              <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                Registration Date Range
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                <TextField
+                  label="Start Date"
+                  type="date"
+                  value={advancedFilters.createdDateRange.start}
+                  onChange={(e) => setAdvancedFilters({
+                    ...advancedFilters,
+                    createdDateRange: { ...advancedFilters.createdDateRange, start: e.target.value }
+                  })}
+                  InputLabelProps={{ shrink: true }}
+                  size="small"
+                  sx={{ flex: 1 }}
+                />
+                <Typography variant="body2" color="text.secondary">to</Typography>
+                <TextField
+                  label="End Date"
+                  type="date"
+                  value={advancedFilters.createdDateRange.end}
+                  onChange={(e) => setAdvancedFilters({
+                    ...advancedFilters,
+                    createdDateRange: { ...advancedFilters.createdDateRange, end: e.target.value }
+                  })}
+                  InputLabelProps={{ shrink: true }}
+                  size="small"
+                  sx={{ flex: 1 }}
+                />
+              </Box>
+            </Grid>
+
+            {/* Contact Information Filters */}
+            <Grid item xs={12} md={4}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Has Email</InputLabel>
+                <Select
+                  value={advancedFilters.hasEmail}
+                  label="Has Email"
+                  onChange={(e) => setAdvancedFilters({
+                    ...advancedFilters,
+                    hasEmail: e.target.value
+                  })}
+                >
+                  <MenuItem value="all">All</MenuItem>
+                  <MenuItem value="yes">Yes</MenuItem>
+                  <MenuItem value="no">No</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12} md={4}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Has Phone</InputLabel>
+                <Select
+                  value={advancedFilters.hasPhone}
+                  label="Has Phone"
+                  onChange={(e) => setAdvancedFilters({
+                    ...advancedFilters,
+                    hasPhone: e.target.value
+                  })}
+                >
+                  <MenuItem value="all">All</MenuItem>
+                  <MenuItem value="yes">Yes</MenuItem>
+                  <MenuItem value="no">No</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12} md={4}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Has Address</InputLabel>
+                <Select
+                  value={advancedFilters.hasAddress}
+                  label="Has Address"
+                  onChange={(e) => setAdvancedFilters({
+                    ...advancedFilters,
+                    hasAddress: e.target.value
+                  })}
+                >
+                  <MenuItem value="all">All</MenuItem>
+                  <MenuItem value="yes">Yes</MenuItem>
+                  <MenuItem value="no">No</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
+        </DialogContent>
+
+        <DialogActions 
+          sx={{ 
+            p: 3, 
+            borderTop: '1px solid rgba(139, 69, 19, 0.08)',
+            background: 'linear-gradient(135deg, rgba(139, 69, 19, 0.02) 0%, rgba(212, 175, 55, 0.02) 100%)',
+          }}
+        >
+          <Button 
+            onClick={() => {
+              setAdvancedFilters({
+                visitRange: { min: '', max: '' },
+                spentRange: { min: '', max: '' },
+                createdDateRange: { start: '', end: '' },
+                hasEmail: 'all',
+                hasPhone: 'all',
+                hasAddress: 'all',
+              });
+            }}
+            sx={{ 
+              color: 'text.secondary',
+              px: 3,
+              py: 1,
+              borderRadius: 2,
+              '&:hover': {
+                backgroundColor: 'rgba(139, 69, 19, 0.05)',
+              }
+            }}
+          >
+            Clear Filters
+          </Button>
+          <Button 
+            onClick={() => setAdvancedFiltersOpen(false)}
+            variant="contained"
+            sx={{
+              background: 'linear-gradient(135deg, #8B4513 0%, #A0522D 100%)',
+              px: 4,
+              py: 1,
+              borderRadius: 2,
+              fontWeight: 600,
+              '&:hover': {
+                background: 'linear-gradient(135deg, #A0522D 0%, #8B4513 100%)',
+                transform: 'translateY(-1px)',
+                boxShadow: '0 6px 20px rgba(139, 69, 19, 0.3)',
+              },
+              transition: 'all 0.3s ease',
+            }}
+          >
+            Apply Filters
           </Button>
         </DialogActions>
       </Dialog>
